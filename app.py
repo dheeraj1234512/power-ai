@@ -15,7 +15,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 
 SHEET_ID = "1KZ4bnjGkOAjCy_vto-ESkcyl7LessM4IQmfMlSICFC0"
 
-st.set_page_config(page_title="Power AI", page_icon="⚡", layout="centered")
+st.set_page_config(page_title="Power AI", page_icon="⚡", layout="wide")
 
 st.markdown("""
 <style>
@@ -37,10 +37,55 @@ st.markdown("""
     pointer-events: none;
     z-index: 0;
 }
-.main-header { text-align: center; padding: 30px 0 10px 0; }
+
+/* ===== SIDEBAR ===== */
+[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0d0520 0%, #0a0a1a 100%) !important;
+    border-right: 1px solid rgba(123, 47, 255, 0.3) !important;
+}
+[data-testid="stSidebar"] * { color: #e2d9f3 !important; }
+
+.sidebar-header {
+    text-align: center;
+    padding: 10px 0 20px 0;
+}
+.sidebar-header h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.4em;
+    background: linear-gradient(90deg, #7b2fff, #ff2fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900;
+    letter-spacing: 3px;
+}
+
+.chat-item {
+    background: rgba(123, 47, 255, 0.1);
+    border: 1px solid rgba(123, 47, 255, 0.2);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin: 5px 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.chat-item:hover {
+    background: rgba(123, 47, 255, 0.25);
+    border-color: rgba(123, 47, 255, 0.5);
+}
+.chat-item-active {
+    background: rgba(123, 47, 255, 0.3) !important;
+    border-color: rgba(123, 47, 255, 0.8) !important;
+}
+
+/* ===== MAIN HEADER ===== */
+.main-header { text-align: center; padding: 20px 0 10px 0; }
 .main-header h1 {
     font-family: 'Orbitron', sans-serif;
-    font-size: 3.5em;
+    font-size: 2.8em;
     font-weight: 900;
     background: linear-gradient(90deg, #7b2fff, #ff2fff, #00d4ff, #7b2fff);
     background-size: 300%;
@@ -55,7 +100,7 @@ st.markdown("""
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
-.main-header p { color: #a78bfa !important; font-size: 1em; letter-spacing: 3px; text-transform: uppercase; }
+.main-header p { color: #a78bfa !important; font-size: 0.9em; letter-spacing: 3px; text-transform: uppercase; }
 
 /* ===== LUXURY TEXT INPUT ===== */
 .stTextInput input {
@@ -68,16 +113,14 @@ st.markdown("""
     font-weight: 500 !important;
     letter-spacing: 0.5px !important;
     padding: 12px 16px !important;
-    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4), 0 2px 12px rgba(0,0,0,0.2) !important;
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4) !important;
+    transition: all 0.35s ease !important;
     caret-color: #c084fc !important;
     outline: none !important;
 }
 .stTextInput input:focus {
-    background: linear-gradient(145deg, #1a0d35, #220f42) !important;
     border: 1px solid rgba(192, 132, 252, 0.7) !important;
-    color: #f5eeff !important;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12), 0 0 20px rgba(139, 92, 246, 0.25), inset 0 2px 8px rgba(0,0,0,0.4) !important;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12), 0 0 20px rgba(139, 92, 246, 0.25) !important;
     outline: none !important;
 }
 .stTextInput input::placeholder { color: rgba(167, 139, 250, 0.35) !important; font-style: italic !important; }
@@ -85,7 +128,7 @@ st.markdown("""
 .stTextInput label {
     color: #a78bfa !important;
     font-family: 'Rajdhani', sans-serif !important;
-    font-size: 0.95em !important;
+    font-size: 0.9em !important;
     font-weight: 600 !important;
     letter-spacing: 1.5px !important;
     text-transform: uppercase !important;
@@ -96,7 +139,7 @@ st.markdown("""
     background: linear-gradient(135deg, #2d1b69 0%, #7b2fff 100%) !important;
     border-radius: 20px 20px 5px 20px !important;
     border: 1px solid rgba(123, 47, 255, 0.8) !important;
-    box-shadow: 0 8px 32px rgba(123, 47, 255, 0.4), inset 0 1px 0 rgba(255,255,255,0.1) !important;
+    box-shadow: 0 8px 32px rgba(123, 47, 255, 0.4) !important;
     transform: perspective(1000px) rotateX(1deg);
     transition: all 0.3s ease !important;
     margin: 8px 0 !important;
@@ -109,7 +152,7 @@ st.markdown("""
     background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%) !important;
     border-radius: 20px 20px 20px 5px !important;
     border: 1px solid rgba(123, 47, 255, 0.4) !important;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(123, 47, 255, 0.1) !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
     transform: perspective(1000px) rotateX(-1deg);
     transition: all 0.3s ease !important;
     margin: 8px 0 !important;
@@ -142,7 +185,7 @@ st.markdown("""
 }
 .stChatInput textarea::placeholder { color: rgba(167, 139, 250, 0.4) !important; font-style: italic !important; }
 .stChatInput button { background: linear-gradient(135deg, #7b2fff, #ff2fff) !important; border: none !important; border-radius: 10px !important; box-shadow: 0 4px 15px rgba(123, 47, 255, 0.5) !important; transition: all 0.3s ease !important; }
-.stChatInput button:hover { transform: scale(1.1) !important; box-shadow: 0 8px 25px rgba(123, 47, 255, 0.8) !important; }
+.stChatInput button:hover { transform: scale(1.1) !important; }
 .stChatInput button svg { fill: white !important; }
 
 /* ===== BUTTONS ===== */
@@ -151,21 +194,19 @@ st.markdown("""
     color: white !important;
     border: none !important;
     border-radius: 10px !important;
-    font-family: 'Orbitron', sans-serif !important;
+    font-family: 'Rajdhani', sans-serif !important;
     font-weight: 700 !important;
-    letter-spacing: 2px !important;
+    letter-spacing: 1px !important;
     box-shadow: 0 4px 15px rgba(123, 47, 255, 0.5) !important;
     transition: all 0.3s ease !important;
 }
-.stButton button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 8px 25px rgba(123, 47, 255, 0.8) !important;
-}
+.stButton button:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 25px rgba(123, 47, 255, 0.8) !important; }
 
 /* ===== TABS ===== */
 .stTabs [data-baseweb="tab-list"] {
     background: transparent !important;
     border-bottom: 1px solid rgba(123, 47, 255, 0.3) !important;
+    gap: 8px !important;
 }
 .stTabs [data-baseweb="tab"] {
     color: #a78bfa !important;
@@ -175,34 +216,22 @@ st.markdown("""
     letter-spacing: 1px !important;
 }
 .stTabs [aria-selected="true"] {
-    color: #c084fc !important;
+    color: #ffffff !important;
+    background: rgba(123, 47, 255, 0.2) !important;
     border-bottom: 2px solid #7b2fff !important;
 }
 
-/* ===== REMOVE ALL RED OUTLINES ===== */
 input, textarea, select, button { outline: none !important; -webkit-tap-highlight-color: transparent !important; }
-input:focus, textarea:focus, select:focus { outline: none !important; }
+input:focus, textarea:focus { outline: none !important; }
 input:focus-visible, textarea:focus-visible { outline: none !important; }
 *:focus { outline: none !important; }
 
-/* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #0a0a0a; }
 ::-webkit-scrollbar-thumb { background: linear-gradient(#7b2fff, #ff2fff); border-radius: 10px; }
-
 #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
-
-# ===== HEADER =====
-st.markdown("""
-<div class="main-header">
-    <h1>⚡ POWER AI</h1>
-    <p>✦ Your Intelligent Assistant — Hindi & English ✦</p>
-</div>
-""", unsafe_allow_html=True)
-
-st.divider()
 
 # ===== GOOGLE SHEETS =====
 def get_sheets():
@@ -247,10 +276,10 @@ def login_user(username, password):
                 return True
     return False
 
-def save_chat(username, question, answer):
+def save_chat(username, question, answer, chat_id):
     chat_sheet, _ = get_sheets()
     if chat_sheet:
-        chat_sheet.append_row([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), question, answer, username])
+        chat_sheet.append_row([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), question, answer, username, chat_id])
 
 def get_user_history(username):
     chat_sheet, _ = get_sheets()
@@ -264,16 +293,37 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
     st.session_state.username = ""
+if "is_guest" not in st.session_state:
+    st.session_state.is_guest = False
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "store" not in st.session_state:
     st.session_state.store = {}
+if "current_chat_id" not in st.session_state:
+    st.session_state.current_chat_id = datetime.now().strftime("%Y%m%d%H%M%S")
+if "all_chats" not in st.session_state:
+    st.session_state.all_chats = {}
+if "active_tab" not in st.session_state:
+    st.session_state.active_tab = "login"
+if "reg_success" not in st.session_state:
+    st.session_state.reg_success = False
 
 # ===== LOGIN PAGE =====
 if not st.session_state.logged_in:
+    st.markdown("""
+    <div class="main-header">
+        <h1>⚡ POWER AI</h1>
+        <p>✦ Your Intelligent Assistant ✦</p>
+    </div>
+    """, unsafe_allow_html=True)
+    st.divider()
+
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        tab1, tab2 = st.tabs(["🔐 Login", "📝 Register"])
+        if st.session_state.reg_success:
+            st.success("✅ Account ban gaya! Ab login karo!")
+
+        tab1, tab2, tab3 = st.tabs(["🔐 Login", "📝 Register", "👤 Guest"])
 
         with tab1:
             st.markdown("### Welcome Back!")
@@ -284,11 +334,24 @@ if not st.session_state.logged_in:
                     if login_user(username, password):
                         st.session_state.logged_in = True
                         st.session_state.username = username
+                        st.session_state.is_guest = False
+                        st.session_state.reg_success = False
                         st.session_state.messages = []
+                        st.session_state.all_chats = {}
+
+                        # Purani history load karo aur chats mein group karo
                         history = get_user_history(username)
                         for row in history:
-                            st.session_state.messages.append({"role": "user", "content": row["User Question"]})
-                            st.session_state.messages.append({"role": "assistant", "content": row["Bot Answer"]})
+                            cid = row.get("Chat ID", "default")
+                            if cid not in st.session_state.all_chats:
+                                st.session_state.all_chats[cid] = []
+                            st.session_state.all_chats[cid].append({"role": "user", "content": row["User Question"]})
+                            st.session_state.all_chats[cid].append({"role": "assistant", "content": row["Bot Answer"]})
+
+                        # Naya chat shuru karo
+                        new_id = datetime.now().strftime("%Y%m%d%H%M%S")
+                        st.session_state.current_chat_id = new_id
+                        st.session_state.messages = []
                         st.rerun()
                     else:
                         st.error("❌ Wrong username or password!")
@@ -307,28 +370,95 @@ if not st.session_state.logged_in:
                     else:
                         success, msg = register_user(new_user, new_pass)
                         if success:
-                            st.success(f"✅ Account ban gaya! Ab login karo!")
+                            st.session_state.reg_success = True
+                            st.rerun()
                         else:
                             st.error(f"❌ {msg}")
                 else:
                     st.warning("⚠️ Sab fields bharo!")
 
+        with tab3:
+            st.markdown("### Guest Mode")
+            st.info("⚠️ Guest mode mein chat history save nahi hogi!")
+            if st.button("Guest ke taur pe continue karo 👤", use_container_width=True, key="guest_btn"):
+                st.session_state.logged_in = True
+                st.session_state.username = "Guest"
+                st.session_state.is_guest = True
+                st.session_state.messages = []
+                st.session_state.current_chat_id = datetime.now().strftime("%Y%m%d%H%M%S")
+                st.rerun()
+
 # ===== CHAT PAGE =====
 else:
-    col1, col2 = st.columns([5, 1])
-    with col1:
-        st.markdown(f"👤 **{st.session_state.username}** ke saath baat kar raha hoon!")
-    with col2:
-        if st.button("Logout"):
-            st.session_state.logged_in = False
-            st.session_state.username = ""
+    # ===== SIDEBAR =====
+    with st.sidebar:
+        st.markdown("""
+        <div class="sidebar-header">
+            <h2>⚡ POWER AI</h2>
+        </div>
+        """, unsafe_allow_html=True)
+
+        # New Chat button
+        if st.button("➕ New Chat", use_container_width=True):
+            new_id = datetime.now().strftime("%Y%m%d%H%M%S")
+            if st.session_state.messages:
+                st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
+            st.session_state.current_chat_id = new_id
             st.session_state.messages = []
             st.session_state.store = {}
             st.rerun()
 
+        st.divider()
+
+        # Purani chats dikhao
+        if not st.session_state.is_guest and st.session_state.all_chats:
+            st.markdown("**💬 Purani Chats:**")
+            for chat_id, chat_msgs in reversed(list(st.session_state.all_chats.items())):
+                if chat_msgs:
+                    # Pehla sawaal dikhao chat ka naam ki tarah
+                    first_q = chat_msgs[0]["content"][:30] + "..." if len(chat_msgs[0]["content"]) > 30 else chat_msgs[0]["content"]
+                    is_active = chat_id == st.session_state.current_chat_id
+                    css_class = "chat-item chat-item-active" if is_active else "chat-item"
+                    st.markdown(f'<div class="{css_class}">💬 {first_q}</div>', unsafe_allow_html=True)
+                    if st.button(f"Open", key=f"chat_{chat_id}"):
+                        if st.session_state.messages:
+                            st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
+                        st.session_state.current_chat_id = chat_id
+                        st.session_state.messages = chat_msgs.copy()
+                        st.session_state.store = {}
+                        st.rerun()
+
+        st.divider()
+
+        # User info aur logout
+        if st.session_state.is_guest:
+            st.markdown("👤 **Guest Mode**")
+        else:
+            st.markdown(f"👤 **{st.session_state.username}**")
+
+        if st.button("🚪 Logout", use_container_width=True):
+            st.session_state.logged_in = False
+            st.session_state.username = ""
+            st.session_state.is_guest = False
+            st.session_state.messages = []
+            st.session_state.store = {}
+            st.session_state.all_chats = {}
+            st.session_state.reg_success = False
+            st.rerun()
+
+    # ===== MAIN CHAT AREA =====
+    st.markdown("""
+    <div class="main-header">
+        <h1>⚡ POWER AI</h1>
+        <p>✦ Your Intelligent Assistant — Hindi & English ✦</p>
+    </div>
+    """, unsafe_allow_html=True)
+    st.divider()
+
+    # AI Setup
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
     prompt = ChatPromptTemplate.from_messages([
-        ("system", f"Tum Power AI ho — ek powerful aur helpful AI assistant. User ka naam {st.session_state.username} hai. Hindi aur English dono mein baat kar sakte ho."),
+        ("system", f"Tum Power AI ho — ek powerful aur helpful AI assistant. User ka naam {st.session_state.username} hai. Hindi aur English dono mein baat kar sakte ho. Hamesha polite aur helpful raho."),
         MessagesPlaceholder(variable_name="history"),
         ("human", "{input}")
     ])
@@ -345,10 +475,12 @@ else:
         history_messages_key="history"
     )
 
+    # Messages dikhao
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
 
+    # Input
     user_input = st.chat_input("⚡ Ask Anything To Power AI...")
 
     if user_input:
@@ -359,7 +491,7 @@ else:
         with st.spinner("⚡ Power AI soch raha hai..."):
             response = chatbot.invoke(
                 {"input": user_input},
-                config={"configurable": {"session_id": st.session_state.username}}
+                config={"configurable": {"session_id": st.session_state.current_chat_id}}
             )
 
         bot_reply = response.content
@@ -367,4 +499,7 @@ else:
             st.write(bot_reply)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
-        save_chat(st.session_state.username, user_input, bot_reply)
+        # Save karo
+        if not st.session_state.is_guest:
+            save_chat(st.session_state.username, user_input, bot_reply, st.session_state.current_chat_id)
+            st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
