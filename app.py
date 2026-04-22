@@ -353,9 +353,25 @@ if "active_tab" not in st.session_state:
     st.session_state.active_tab = "login"
 if "reg_success" not in st.session_state:
     st.session_state.reg_success = False
+if "logout_requested" not in st.session_state:
+    st.session_state.logout_requested = False
+if "login_requested" not in st.session_state:
+    st.session_state.login_requested = False
+if "login_username" not in st.session_state:
+    st.session_state.login_username = ""
+
+# Process pending cookie operations after a rerun
+if st.session_state.logout_requested:
+    delete_login_cookie()
+    st.session_state.logout_requested = False
+
+if st.session_state.login_requested:
+    set_login_cookie(st.session_state.login_username)
+    st.session_state.login_requested = False
+    st.session_state.login_username = ""
 
 # Cookie se login check karo
-if not st.session_state.logged_in:
+if not st.session_state.logged_in and not st.session_state.logout_requested:
     saved_user = get_login_cookie()
     if saved_user and saved_user != "":
         st.session_state.logged_in = True
@@ -396,7 +412,8 @@ if not st.session_state.logged_in:
             if st.button("Login ⚡", use_container_width=True, key="login_btn"):
                 if username and password:
                     if login_user(username, password):
-                        set_login_cookie(username)
+                        st.session_state.login_requested = True
+                        st.session_state.login_username = username
                         st.session_state.logged_in = True
                         st.session_state.username = username
                         st.session_state.is_guest = False
@@ -502,7 +519,7 @@ else:
             st.markdown(f"👤 **{st.session_state.username}**")
 
         if st.button("🚪 Logout", use_container_width=True):
-            delete_login_cookie()
+            st.session_state.logout_requested = True
             st.session_state.logged_in = False
             st.session_state.username = ""
             st.session_state.is_guest = False
