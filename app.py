@@ -22,9 +22,28 @@ st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
 
+:root {
+    --bg-primary: radial-gradient(ellipse at top, #1a0a2e 0%, #0a0a0a 50%, #0d0015 100%);
+    --bg-sidebar: linear-gradient(180deg, #0d0520 0%, #0a0a1a 100%);
+    --text-primary: #e2d9f3;
+    --text-muted: #a78bfa;
+    --accent-primary: #7b2fff;
+    --accent-secondary: #ff2fff;
+    --accent-gradient: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    --border-color: rgba(123, 47, 255, 0.3);
+    --border-color-focus: rgba(192, 132, 252, 0.7);
+    --font-header: 'Orbitron', sans-serif;
+    --font-body: 'Rajdhani', sans-serif;
+    
+    /* Input specifics */
+    --input-bg: linear-gradient(145deg, #120826, #1a0d35);
+    --input-shadow: inset 0 2px 8px rgba(0,0,0,0.4);
+    --input-shadow-focus: 0 0 0 3px rgba(139, 92, 246, 0.12), 0 0 20px rgba(139, 92, 246, 0.25);
+}
+
 .stApp {
-    background: radial-gradient(ellipse at top, #1a0a2e 0%, #0a0a0a 50%, #0d0015 100%);
-    font-family: 'Rajdhani', sans-serif;
+    background: var(--bg-primary);
+    font-family: var(--font-body);
 }
 .stApp::before {
     content: '';
@@ -41,19 +60,19 @@ st.markdown("""
 
 /* ===== SIDEBAR ===== */
 [data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0d0520 0%, #0a0a1a 100%) !important;
-    border-right: 1px solid rgba(123, 47, 255, 0.3) !important;
+    background: var(--bg-sidebar) !important;
+    border-right: 1px solid var(--border-color) !important;
 }
-[data-testid="stSidebar"] * { color: #e2d9f3 !important; }
+[data-testid="stSidebar"] * { color: var(--text-primary) !important; }
 
 .sidebar-header {
     text-align: center;
     padding: 10px 0 20px 0;
 }
 .sidebar-header h2 {
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-header);
     font-size: 1.4em;
-    background: linear-gradient(90deg, #7b2fff, #ff2fff);
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: 900;
@@ -85,10 +104,10 @@ st.markdown("""
 /* ===== MAIN HEADER ===== */
 .main-header { text-align: center; padding: 20px 0 10px 0; }
 .main-header h1 {
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-header);
     font-size: 2.8em;
     font-weight: 900;
-    background: linear-gradient(90deg, #7b2fff, #ff2fff, #00d4ff, #7b2fff);
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), #00d4ff, var(--accent-primary));
     background-size: 300%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -101,34 +120,45 @@ st.markdown("""
     50% { background-position: 100% 50%; }
     100% { background-position: 0% 50%; }
 }
-.main-header p { color: #a78bfa !important; font-size: 0.9em; letter-spacing: 3px; text-transform: uppercase; }
+.main-header p { color: var(--text-muted) !important; font-size: 0.9em; letter-spacing: 3px; text-transform: uppercase; }
 
-/* ===== LUXURY TEXT INPUT ===== */
-.stTextInput input {
-    background: linear-gradient(145deg, #120826, #1a0d35) !important;
+/* ===== INPUTS & TEXTAREAS ===== */
+.stTextInput input, .stChatInput textarea {
+    background: var(--input-bg) !important;
     color: #f0e6ff !important;
-    border: 1px solid rgba(139, 92, 246, 0.35) !important;
-    border-radius: 12px !important;
-    font-family: 'Rajdhani', sans-serif !important;
-    font-size: 1.1em !important;
+    font-family: var(--font-body) !important;
     font-weight: 500 !important;
-    letter-spacing: 0.5px !important;
-    padding: 12px 16px !important;
-    box-shadow: inset 0 2px 8px rgba(0,0,0,0.4) !important;
     transition: all 0.35s ease !important;
     caret-color: #c084fc !important;
     outline: none !important;
 }
-.stTextInput input:focus {
-    border: 1px solid rgba(192, 132, 252, 0.7) !important;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12), 0 0 20px rgba(139, 92, 246, 0.25) !important;
-    outline: none !important;
+.stTextInput input {
+    border: 1px solid rgba(139, 92, 246, 0.35) !important;
+    border-radius: 12px !important;
+    font-size: 1.1em !important;
+    letter-spacing: 0.5px !important;
+    padding: 12px 16px !important;
+    box-shadow: var(--input-shadow) !important;
 }
-.stTextInput input::placeholder { color: rgba(167, 139, 250, 0.35) !important; font-style: italic !important; }
-.stTextInput input:focus-visible { outline: none !important; }
+.stChatInput textarea {
+    border: 1.5px solid rgba(180, 120, 255, 0.5) !important;
+    border-radius: 18px !important;
+    font-size: 1.2em !important;
+    letter-spacing: 0.8px !important;
+    padding: 14px 20px !important;
+    box-shadow: 0 4px 30px rgba(100, 30, 200, 0.25), inset 0 2px 12px rgba(0,0,0,0.6) !important;
+}
+.stTextInput input:focus, .stChatInput textarea:focus {
+    border-color: var(--border-color-focus) !important;
+    box-shadow: var(--input-shadow-focus) !important;
+}
+.stTextInput input::placeholder, .stChatInput textarea::placeholder { 
+    color: rgba(167, 139, 250, 0.35) !important; 
+    font-style: italic !important; 
+}
 .stTextInput label {
-    color: #a78bfa !important;
-    font-family: 'Rajdhani', sans-serif !important;
+    color: var(--text-muted) !important;
+    font-family: var(--font-body) !important;
     font-size: 0.9em !important;
     font-weight: 600 !important;
     letter-spacing: 1.5px !important;
@@ -136,14 +166,13 @@ st.markdown("""
 }
 
 /* ===== CHAT MESSAGES ===== */
+.stChatMessage { margin: 8px 0 !important; transition: all 0.3s ease !important; }
 .stChatMessage[data-testid="stChatMessageUser"] {
-    background: linear-gradient(135deg, #2d1b69 0%, #7b2fff 100%) !important;
+    background: linear-gradient(135deg, #2d1b69 0%, var(--accent-primary) 100%) !important;
     border-radius: 20px 20px 5px 20px !important;
     border: 1px solid rgba(123, 47, 255, 0.8) !important;
     box-shadow: 0 8px 32px rgba(123, 47, 255, 0.4) !important;
     transform: perspective(1000px) rotateX(1deg);
-    transition: all 0.3s ease !important;
-    margin: 8px 0 !important;
 }
 .stChatMessage[data-testid="stChatMessageUser"]:hover {
     transform: perspective(1000px) rotateX(0deg) translateY(-2px);
@@ -155,63 +184,41 @@ st.markdown("""
     border: 1px solid rgba(123, 47, 255, 0.4) !important;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5) !important;
     transform: perspective(1000px) rotateX(-1deg);
-    transition: all 0.3s ease !important;
-    margin: 8px 0 !important;
 }
 .stChatMessage[data-testid="stChatMessageAssistant"]:hover {
     transform: perspective(1000px) rotateX(0deg) translateY(-2px);
 }
-.stChatMessage p, .stChatMessage div { color: #e2d9f3 !important; font-size: 1.05em !important; line-height: 1.6 !important; }
-
-/* ===== CHAT INPUT ===== */
-.stChatInput textarea {
-    background: linear-gradient(145deg, #120826, #1e0d3a) !important;
-    color: #f0e6ff !important;
-    border: 1.5px solid rgba(180, 120, 255, 0.5) !important;
-    border-radius: 18px !important;
-    font-family: 'Rajdhani', sans-serif !important;
-    font-size: 1.2em !important;
-    font-weight: 500 !important;
-    letter-spacing: 0.8px !important;
-    padding: 14px 20px !important;
-    box-shadow: 0 4px 30px rgba(100, 30, 200, 0.25), inset 0 2px 12px rgba(0,0,0,0.6) !important;
-    transition: all 0.4s ease !important;
-    caret-color: #c084fc !important;
-    outline: none !important;
-}
-.stChatInput textarea:focus {
-    border: 1.5px solid rgba(192, 132, 252, 0.9) !important;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), 0 0 30px rgba(139, 92, 246, 0.4) !important;
-    outline: none !important;
-}
-.stChatInput textarea::placeholder { color: rgba(167, 139, 250, 0.4) !important; font-style: italic !important; }
-.stChatInput button { background: linear-gradient(135deg, #7b2fff, #ff2fff) !important; border: none !important; border-radius: 10px !important; box-shadow: 0 4px 15px rgba(123, 47, 255, 0.5) !important; transition: all 0.3s ease !important; }
-.stChatInput button:hover { transform: scale(1.1) !important; }
-.stChatInput button svg { fill: white !important; }
+.stChatMessage p, .stChatMessage div { color: var(--text-primary) !important; font-size: 1.05em !important; line-height: 1.6 !important; }
 
 /* ===== BUTTONS ===== */
-.stButton button {
-    background: linear-gradient(135deg, #7b2fff, #ff2fff) !important;
+.stButton button, .stChatInput button {
+    background: var(--accent-gradient) !important;
     color: white !important;
     border: none !important;
     border-radius: 10px !important;
-    font-family: 'Rajdhani', sans-serif !important;
-    font-weight: 700 !important;
-    letter-spacing: 1px !important;
     box-shadow: 0 4px 15px rgba(123, 47, 255, 0.5) !important;
     transition: all 0.3s ease !important;
 }
-.stButton button:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 25px rgba(123, 47, 255, 0.8) !important; }
+.stButton button {
+    font-family: var(--font-body) !important;
+    font-weight: 700 !important;
+    letter-spacing: 1px !important;
+}
+.stButton button:hover, .stChatInput button:hover {
+    transform: translateY(-2px) !important; 
+    box-shadow: 0 8px 25px rgba(123, 47, 255, 0.8) !important;
+}
+.stChatInput button svg { fill: white !important; }
 
 /* ===== TABS ===== */
 .stTabs [data-baseweb="tab-list"] {
     background: transparent !important;
-    border-bottom: 1px solid rgba(123, 47, 255, 0.3) !important;
+    border-bottom: 1px solid var(--border-color) !important;
     gap: 8px !important;
 }
 .stTabs [data-baseweb="tab"] {
-    color: #a78bfa !important;
-    font-family: 'Rajdhani', sans-serif !important;
+    color: var(--text-muted) !important;
+    font-family: var(--font-body) !important;
     font-size: 1.1em !important;
     font-weight: 600 !important;
     letter-spacing: 1px !important;
@@ -219,17 +226,16 @@ st.markdown("""
 .stTabs [aria-selected="true"] {
     color: #ffffff !important;
     background: rgba(123, 47, 255, 0.2) !important;
-    border-bottom: 2px solid #7b2fff !important;
+    border-bottom: 2px solid var(--accent-primary) !important;
 }
 
 input, textarea, select, button { outline: none !important; -webkit-tap-highlight-color: transparent !important; }
-input:focus, textarea:focus { outline: none !important; }
-input:focus-visible, textarea:focus-visible { outline: none !important; }
-*:focus { outline: none !important; }
+input:focus, textarea:focus, input:focus-visible, textarea:focus-visible, *:focus { outline: none !important; }
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #0a0a0a; }
-::-webkit-scrollbar-thumb { background: linear-gradient(#7b2fff, #ff2fff); border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: var(--accent-gradient); border-radius: 10px; }
+
 /* ===== SIDEBAR TOGGLE ===== */
 section[data-testid="stSidebarCollapsedControl"] {
     display: block !important;
@@ -238,7 +244,7 @@ section[data-testid="stSidebarCollapsedControl"] {
     z-index: 9999 !important;
 }
 section[data-testid="stSidebarCollapsedControl"] button {
-    background: linear-gradient(135deg, #7b2fff, #ff2fff) !important;
+    background: var(--accent-gradient) !important;
     border-radius: 0 10px 10px 0 !important;
     box-shadow: 4px 0 20px rgba(123, 47, 255, 0.6) !important;
     border: none !important;
@@ -248,19 +254,22 @@ section[data-testid="stSidebarCollapsedControl"] button {
     visibility: visible !important;
     opacity: 1 !important;
 }
-section[data-testid="stSidebarCollapsedControl"] button svg {
-    fill: white !important;
-}
+section[data-testid="stSidebarCollapsedControl"] button svg { fill: white !important; }
 section[data-testid="stSidebarCollapsedControl"] button:hover {
     box-shadow: 4px 0 30px rgba(123, 47, 255, 0.9) !important;
     transform: scale(1.05) !important;
 }
-#MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
+#MainMenu, footer, header { visibility: hidden; }
 </style>
 """, unsafe_allow_html=True)
 
 # ===== GOOGLE SHEETS =====
 def get_sheets():
+    # Helper func for caching
+    return _get_sheets()
+
+@st.cache_resource(ttl=3600)
+def _get_sheets():
     try:
         creds = Credentials.from_service_account_info(
             st.secrets["gcp_service_account"],
@@ -514,7 +523,11 @@ else:
     st.divider()
 
     # AI Setup
-    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
+    @st.cache_resource
+    def get_llm():
+        return ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
+        
+    llm = get_llm()
     prompt = ChatPromptTemplate.from_messages([
         ("system", f"""You are Power AI — a highly intelligent, reliable, and context-aware assistant designed to deliver accurate, practical, and insightful responses. User ka naam {st.session_state.username} hai. Communication Style:
         - Hindi aur English ka natural mix (Hinglish) use karo, based on user tone.
