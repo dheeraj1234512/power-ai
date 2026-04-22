@@ -26,7 +26,8 @@ def get_sheet():
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SHEET_ID).sheet1
         return sheet
-    except:
+    except Exception as e:
+        st.error(f"❌ Sheet Error: {e}")
         return None
 
 def save_to_sheet(question, answer, session_id):
@@ -35,8 +36,11 @@ def save_to_sheet(question, answer, session_id):
         if sheet:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sheet.append_row([timestamp, question, answer, session_id])
-    except:
-        pass
+            st.success("✅ Sheet mein save hua!")
+        else:
+            st.error("❌ Sheet connect nahi hui!")
+    except Exception as e:
+        st.error(f"❌ Error: {e}")
 
 st.set_page_config(page_title="Power AI", page_icon="⚡", layout="centered")
 
