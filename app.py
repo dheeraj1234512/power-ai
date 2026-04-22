@@ -3,9 +3,14 @@ from langchain_groq import ChatGroq
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Streamlit secrets se bhi key lo
+if "GROQ_API_KEY" in st.secrets:
+    os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
 # ===== PAGE CONFIG =====
 st.set_page_config(
