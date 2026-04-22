@@ -13,7 +13,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
 # ===== GOOGLE SHEETS SETUP =====
-SHEET_ID = "ESkcyl7LessM4IQmfMlSICFC0"  # Step 5 mein copy kiya tha
+SHEET_ID = "1KZ4bnjGkOAjCy_vto-ESkcyl7LessM4IQmfMlSICFC0"  # Step 5 mein copy kiya tha
 
 @st.cache_resource
 def get_sheet():
@@ -26,8 +26,7 @@ def get_sheet():
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SHEET_ID).sheet1
         return sheet
-    except Exception as e:
-        st.error(f"❌ Sheet Error: {e}")
+    except:
         return None
 
 def save_to_sheet(question, answer, session_id):
@@ -36,11 +35,8 @@ def save_to_sheet(question, answer, session_id):
         if sheet:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sheet.append_row([timestamp, question, answer, session_id])
-            st.success("✅ Sheet mein save hua!")
-        else:
-            st.error("❌ Sheet connect nahi hui!")
-    except Exception as e:
-        st.error(f"❌ Error: {e}")
+    except:
+        pass
 
 st.set_page_config(page_title="Power AI", page_icon="⚡", layout="centered")
 
