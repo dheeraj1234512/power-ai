@@ -230,6 +230,21 @@ input:focus-visible, textarea:focus-visible { outline: none !important; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #0a0a0a; }
 ::-webkit-scrollbar-thumb { background: linear-gradient(#7b2fff, #ff2fff); border-radius: 10px; }
+[data-testid="collapsedControl"] {
+    display: flex !important;
+    visibility: visible !important;
+    background: linear-gradient(135deg, #7b2fff, #ff2fff) !important;
+    border-radius: 0 10px 10px 0 !important;
+    box-shadow: 4px 0 15px rgba(123, 47, 255, 0.5) !important;
+    color: white !important;
+    z-index: 999 !important;
+}
+[data-testid="collapsedControl"]:hover {
+    box-shadow: 4px 0 25px rgba(123, 47, 255, 0.8) !important;
+}
+[data-testid="collapsedControl"] svg {
+    fill: white !important;
+}
 #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
