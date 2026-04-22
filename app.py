@@ -111,7 +111,7 @@ st.markdown("""
 .stChatInput textarea {
     background: linear-gradient(145deg, #120826, #1e0d3a) !important;
     color: #f0e6ff !important;
-    border: 1.5px solid rgba(180, 120, 255, 0.5) !important;
+    border: 1.5px solid !important;
     border-radius: 18px !important;
     font-family: 'Rajdhani', sans-serif !important;
     font-size: 1.2em !important;
@@ -124,7 +124,7 @@ st.markdown("""
     outline: none !important;
 }
 .stChatInput textarea:focus {
-    border: 1.5px solid rgba(192, 132, 252, 0.9) !important;
+    border: 1.5px solid !important;
     box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), 0 0 30px rgba(139, 92, 246, 0.4) !important;
     outline: none !important;
 }
