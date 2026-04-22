@@ -166,6 +166,7 @@ st.markdown("""
 .stTabs [data-baseweb="tab-list"] {
     background: transparent !important;
     border-bottom: 1px solid rgba(123, 47, 255, 0.3) !important;
+    gap: 8px !important;
 }
 .stTabs [data-baseweb="tab"] {
     color: #a78bfa !important;
@@ -173,9 +174,12 @@ st.markdown("""
     font-size: 1.1em !important;
     font-weight: 600 !important;
     letter-spacing: 1px !important;
+    border-radius: 8px 8px 0 0 !important;
+    padding: 8px 20px !important;
 }
 .stTabs [aria-selected="true"] {
-    color: #c084fc !important;
+    color: #ffffff !important;
+    background: rgba(123, 47, 255, 0.2) !important;
     border-bottom: 2px solid #7b2fff !important;
 }
 
@@ -264,6 +268,8 @@ if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 if "username" not in st.session_state:
     st.session_state.username = ""
+if "is_guest" not in st.session_state:
+    st.session_state.is_guest = False
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "store" not in st.session_state:
@@ -273,7 +279,7 @@ if "store" not in st.session_state:
 if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        tab1, tab2 = st.tabs(["🔐 Login", "📝 Register"])
+        tab1, tab2, tab3 = st.tabs(["🔐 Login", "📝 Register", "👤 Guest"])
 
         with tab1:
             st.markdown("### Welcome Back!")
@@ -284,6 +290,7 @@ if not st.session_state.logged_in:
                     if login_user(username, password):
                         st.session_state.logged_in = True
                         st.session_state.username = username
+                        st.session_state.is_guest = False
                         st.session_state.messages = []
                         history = get_user_history(username)
                         for row in history:
@@ -307,28 +314,42 @@ if not st.session_state.logged_in:
                     else:
                         success, msg = register_user(new_user, new_pass)
                         if success:
-                            st.success(f"✅ Account ban gaya! Ab login karo!")
+                            st.success("✅ Account ban gaya! Ab login karo!")
                         else:
                             st.error(f"❌ {msg}")
                 else:
                     st.warning("⚠️ Sab fields bharo!")
 
+        with tab3:
+            st.markdown("### Guest Mode")
+            st.info("⚠️ Guest mode mein chat history save nahi hogi!")
+            if st.button("Guest ke taur pe continue karo 👤", use_container_width=True, key="guest_btn"):
+                st.session_state.logged_in = True
+                st.session_state.username = "Guest"
+                st.session_state.is_guest = True
+                st.session_state.messages = []
+                st.rerun()
+
 # ===== CHAT PAGE =====
 else:
     col1, col2 = st.columns([5, 1])
     with col1:
-        st.markdown(f"👤 **{st.session_state.username}** ke saath baat kar raha hoon!")
+        if st.session_state.is_guest:
+            st.markdown("👤 **Guest Mode** — history save nahi hogi!")
+        else:
+            st.markdown(f"👤 **{st.session_state.username}** — welcome back!")
     with col2:
         if st.button("Logout"):
             st.session_state.logged_in = False
             st.session_state.username = ""
+            st.session_state.is_guest = False
             st.session_state.messages = []
             st.session_state.store = {}
             st.rerun()
 
     llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
     prompt = ChatPromptTemplate.from_messages([
-        ("system", f"Tum Power AI ho — ek powerful aur helpful AI assistant. User ka naam {st.session_state.username} hai. Hindi aur English dono mein baat kar sakte ho."),
+        ("system", f"Tum Power AI ho — ek powerful aur helpful AI assistant. User ka naam {st.session_state.username} hai. Hindi aur English dono mein baat kar sakte ho. Hamesha polite aur helpful raho."),
         MessagesPlaceholder(variable_name="history"),
         ("human", "{input}")
     ])
@@ -367,4 +388,6 @@ else:
             st.write(bot_reply)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
-        save_chat(st.session_state.username, user_input, bot_reply)
+        # Guest ki history save nahi hogi
+        if not st.session_state.is_guest:
+            save_chat(st.session_state.username, user_input, bot_reply)
