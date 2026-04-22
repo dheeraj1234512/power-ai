@@ -15,7 +15,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 # ===== GOOGLE SHEETS SETUP =====
 SHEET_ID = "1KZ4bnjGkOAjCy_vto-ESkcyl7LessM4IQmfMlSICFC0"
 
-@st.cache_resource
+
 def get_sheet():
     try:
         creds = Credentials.from_service_account_info(
