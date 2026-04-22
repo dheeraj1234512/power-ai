@@ -113,33 +113,62 @@ st.markdown("""
     line-height: 1.6 !important;
 }
 
-/* ===== CHAT INPUT FIX ===== */
-.stChatInput {
-    position: relative;
-}
+/* ===== LUXURY CHAT INPUT ===== */
+.stChatInput { position: relative; }
+
 .stChatInput textarea {
-    background-color: #1a0a2e !important;
-    color: #e2d9f3 !important;
-    border: 2px solid rgba(123, 47, 255, 0.6) !important;
-    border-radius: 15px !important;
-    font-family: 'Rajdhani', sans-serif !important;
-    font-size: 1.1em !important;
-    box-shadow: 
-        0 0 20px rgba(123, 47, 255, 0.3),
-        inset 0 2px 10px rgba(0,0,0,0.5) !important;
-    transition: all 0.3s ease !important;
-    caret-color: #7b2fff !important;
-}
-.stChatInput textarea:focus {
-    border-color: #7b2fff !important;
-    box-shadow: 
-        0 0 30px rgba(123, 47, 255, 0.6),
-        0 0 60px rgba(123, 47, 255, 0.2),
-        inset 0 2px 10px rgba(0,0,0,0.5) !important;
+    background: linear-gradient(145deg, #120826, #1e0d3a) !important;
+    color: #f0e6ff !important;
+    border: 1.5px solid rgba(180, 120, 255, 0.5) !important;
+    border-radius: 18px !important;
+    font-family: 'Cormorant Garamond', 'Georgia', serif !important;
+    font-size: 1.25em !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.8px !important;
+    line-height: 1.7 !important;
+    padding: 14px 20px !important;
+    box-shadow:
+        0 0 0 0 transparent,
+        0 4px 30px rgba(100, 30, 200, 0.25),
+        inset 0 2px 12px rgba(0, 0, 0, 0.6) !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    caret-color: #c084fc !important;
     outline: none !important;
 }
+
+.stChatInput textarea:focus {
+    background: linear-gradient(145deg, #1a0d35, #240f45) !important;
+    border: 1.5px solid rgba(192, 132, 252, 0.9) !important;
+    color: #f5eeff !important;
+    box-shadow:
+        0 0 0 3px rgba(139, 92, 246, 0.15),
+        0 0 25px rgba(139, 92, 246, 0.35),
+        0 0 60px rgba(139, 92, 246, 0.1),
+        inset 0 2px 15px rgba(0, 0, 0, 0.5) !important;
+    outline: none !important;
+}
+
 .stChatInput textarea::placeholder {
-    color: #6b5a8a !important;
+    color: rgba(167, 139, 250, 0.4) !important;
+    font-style: italic !important;
+    font-size: 0.95em !important;
+    letter-spacing: 1px !important;
+}
+
+/* Remove red/ugly browser outline completely */
+.stChatInput textarea:focus-visible {
+    outline: none !important;
+    box-shadow:
+        0 0 0 3px rgba(139, 92, 246, 0.15),
+        0 0 25px rgba(139, 92, 246, 0.35),
+        inset 0 2px 15px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Fix all red outlines globally */
+*:focus { outline: none !important; }
+*:focus-visible {
+    outline: 2px solid rgba(139, 92, 246, 0.5) !important;
+    outline-offset: 2px !important;
 }
 
 /* ===== SEND BUTTON ===== */
