@@ -230,20 +230,30 @@ input:focus-visible, textarea:focus-visible { outline: none !important; }
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #0a0a0a; }
 ::-webkit-scrollbar-thumb { background: linear-gradient(#7b2fff, #ff2fff); border-radius: 10px; }
-[data-testid="collapsedControl"] {
-    display: flex !important;
+/* ===== SIDEBAR TOGGLE ===== */
+section[data-testid="stSidebarCollapsedControl"] {
+    display: block !important;
     visibility: visible !important;
+    opacity: 1 !important;
+    z-index: 9999 !important;
+}
+section[data-testid="stSidebarCollapsedControl"] button {
     background: linear-gradient(135deg, #7b2fff, #ff2fff) !important;
     border-radius: 0 10px 10px 0 !important;
-    box-shadow: 4px 0 15px rgba(123, 47, 255, 0.5) !important;
-    color: white !important;
-    z-index: 999 !important;
+    box-shadow: 4px 0 20px rgba(123, 47, 255, 0.6) !important;
+    border: none !important;
+    width: 32px !important;
+    height: 64px !important;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
-[data-testid="collapsedControl"]:hover {
-    box-shadow: 4px 0 25px rgba(123, 47, 255, 0.8) !important;
-}
-[data-testid="collapsedControl"] svg {
+section[data-testid="stSidebarCollapsedControl"] button svg {
     fill: white !important;
+}
+section[data-testid="stSidebarCollapsedControl"] button:hover {
+    box-shadow: 4px 0 30px rgba(123, 47, 255, 0.9) !important;
+    transform: scale(1.05) !important;
 }
 #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
 </style>
