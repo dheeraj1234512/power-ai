@@ -2,8 +2,9 @@ import streamlit as st
 import os
 import gspread
 from google.oauth2.service_account import Credentials
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
+import extra_streamlit_components as stx
 
 if "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
@@ -288,6 +289,18 @@ def get_user_history(username):
         return [row for row in data if row["Session ID"] == username]
     return []
 
+# ===== COOKIE MANAGER =====
+cookie_manager = stx.CookieManager()
+
+def set_login_cookie(username):
+    cookie_manager.set("power_ai_user", username, expires_at=datetime.now() + timedelta(days=7))
+
+def get_login_cookie():
+    return cookie_manager.get("power_ai_user")
+
+def delete_login_cookie():
+    cookie_manager.delete("power_ai_user")
+
 # ===== SESSION STATE =====
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -307,6 +320,24 @@ if "active_tab" not in st.session_state:
     st.session_state.active_tab = "login"
 if "reg_success" not in st.session_state:
     st.session_state.reg_success = False
+
+# Cookie se login check karo
+if not st.session_state.logged_in:
+    saved_user = get_login_cookie()
+    if saved_user and saved_user != "":
+        st.session_state.logged_in = True
+        st.session_state.username = saved_user
+        st.session_state.is_guest = False
+        history = get_user_history(saved_user)
+        st.session_state.all_chats = {}
+        for row in history:
+            cid = row.get("Chat ID", "default")
+            if cid not in st.session_state.all_chats:
+                st.session_state.all_chats[cid] = []
+            st.session_state.all_chats[cid].append({"role": "user", "content": row["User Question"]})
+            st.session_state.all_chats[cid].append({"role": "assistant", "content": row["Bot Answer"]})
+        st.session_state.current_chat_id = datetime.now().strftime("%Y%m%d%H%M%S")
+        st.session_state.messages = []
 
 # ===== LOGIN PAGE =====
 if not st.session_state.logged_in:
@@ -332,6 +363,7 @@ if not st.session_state.logged_in:
             if st.button("Login ⚡", use_container_width=True, key="login_btn"):
                 if username and password:
                     if login_user(username, password):
+                        set_login_cookie(username)
                         st.session_state.logged_in = True
                         st.session_state.username = username
                         st.session_state.is_guest = False
@@ -437,6 +469,7 @@ else:
             st.markdown(f"👤 **{st.session_state.username}**")
 
         if st.button("🚪 Logout", use_container_width=True):
+            delete_login_cookie()
             st.session_state.logged_in = False
             st.session_state.username = ""
             st.session_state.is_guest = False
