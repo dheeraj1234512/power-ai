@@ -26,7 +26,8 @@ def get_sheet():
         client = gspread.authorize(creds)
         sheet = client.open_by_key(SHEET_ID).sheet1
         return sheet
-    except:
+    except Exception as e:
+        st.error(f"❌ Sheet Error: {e}")
         return None
 
 def save_to_sheet(question, answer, session_id):
