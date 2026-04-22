@@ -16,7 +16,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 
 SHEET_ID = "1KZ4bnjGkOAjCy_vto-ESkcyl7LessM4IQmfMlSICFC0"
 
-st.set_page_config(page_title="Power AI", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="Power AI", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
 
 st.markdown("""
 <style>
@@ -259,13 +259,12 @@ section[data-testid="stSidebarCollapsedControl"] button:hover {
     box-shadow: 4px 0 30px rgba(123, 47, 255, 0.9) !important;
     transform: scale(1.05) !important;
 }
-#MainMenu, footer, header { visibility: hidden; }
+#MainMenu {visibility: hidden;} footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
 # ===== GOOGLE SHEETS =====
 def get_sheets():
-    # Helper func for caching
     return _get_sheets()
 
 @st.cache_resource(ttl=3600)

@@ -12,7 +12,7 @@ llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
 
 # Prompt Template
 prompt = ChatPromptTemplate.from_messages([
-    ("system", """You are Power AI — a highly intelligent, reliable, and context-aware assistant designed to deliver accurate, practical, and insightful responses. User ka naam {st.session_state.username} hai. Communication Style:
+    ("system", """You are Power AI — a highly intelligent, reliable, and context-aware assistant designed to deliver accurate, practical, and insightful responses. User ka naam {username} hai. Communication Style:
         - Hindi aur English ka natural mix (Hinglish) use karo, based on user tone.
         - Clear, structured aur easy-to-understand responses do.
         - Overly robotic ya overly casual tone avoid karo — balanced, professional + friendly raho.Expert Mode:
@@ -55,6 +55,9 @@ chatbot = RunnableWithMessageHistory(
 
 # Chatbot chalu karo!
 print("🤖 AI Chatbot Ready! (band karne ke liye 'quit' likho)\n")
+username_input = input("Tumhara naam kya hai? (Enter for 'Guest'): ").strip()
+if not username_input:
+    username_input = "Guest"
 
 while True:
     user_input = input("Tum: ")
@@ -64,7 +67,7 @@ while True:
         break
     
     response = chatbot.invoke(
-        {"input": user_input},
+        {"input": user_input, "username": username_input},
         config={"configurable": {"session_id": "user1"}}
     )
     print(f"Bot: {response.content}\n")
