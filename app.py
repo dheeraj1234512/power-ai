@@ -35,8 +35,11 @@ def save_to_sheet(question, answer, session_id):
         if sheet:
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             sheet.append_row([timestamp, question, answer, session_id])
-    except:
-        pass
+            st.success("✅ Sheet mein save hua!")
+        else:
+            st.error("❌ Sheet connect nahi hui!")
+    except Exception as e:
+        st.error(f"❌ Error: {e}")
 
 st.set_page_config(page_title="Power AI", page_icon="⚡", layout="centered")
 
