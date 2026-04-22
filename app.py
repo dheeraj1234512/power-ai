@@ -136,7 +136,9 @@ if "login_username" not in st.session_state:
 # Process pending cookie operations
 if st.session_state.logout_requested:
     delete_login_cookie()
-    st.session_state.logout_requested = False
+    cookie_val = get_login_cookie()
+    if cookie_val is None or cookie_val == "":
+        st.session_state.logout_requested = False
 
 if st.session_state.login_requested:
     set_login_cookie(st.session_state.login_username)
@@ -174,14 +176,71 @@ if not st.session_state.logged_in:
         tab1, tab2, tab3 = st.tabs(["🔐 Login", "📝 Register", "👤 Guest"])
 
         with tab1:
-            # ... login tab unchanged ...
-            pass
+            st.markdown("### Welcome Back!")
+            username = st.text_input("Username:", key="login_user", placeholder="Enter your username")
+            password = st.text_input("Password:", type="password", key="login_pass", placeholder="Enter your password")
+            if st.button("Login 🚀", use_container_width=True, key="login_btn"):
+                if username and password:
+                    if login_user(username, password):
+                        st.session_state.login_requested = True
+                        st.session_state.login_username = username
+                        st.session_state.logged_in = True
+                        st.session_state.username = username
+                        st.session_state.is_guest = False
+                        st.session_state.reg_success = False
+                        st.session_state.messages = []
+                        st.session_state.all_chats = {}
+                        
+                        # Purani history load karo aur chats mein group karo
+                        history = get_user_history(username)
+                        for row in history:
+                            cid = row.get("Chat ID", "default")
+                            if cid not in st.session_state.all_chats:
+                                st.session_state.all_chats[cid] = []
+                            st.session_state.all_chats[cid].append({"role": "user", "content": row["User Question"]})
+                            st.session_state.all_chats[cid].append({"role": "assistant", "content": row["Bot Answer"]})
+                        
+                        # Naya chat shuru karo
+                        new_id = datetime.now().strftime("%Y%m%d%H%M%S")
+                        st.session_state.current_chat_id = new_id
+                        st.session_state.messages = []
+                        st.session_state.logout_requested = False
+                        st.rerun()
+                    else:
+                        st.error("❌ Wrong username or password!")
+                else:
+                    st.warning("⚠️ Please fill in all fields!")
+
         with tab2:
-            # ... register tab unchanged ...
-            pass
+            st.markdown("### Create Account!")
+            new_user = st.text_input("Username:", key="reg_user", placeholder="Enter your username")
+            new_pass = st.text_input("Password:", type="password", key="reg_pass", placeholder="Enter a strong password")
+            confirm_pass = st.text_input("Confirm Password:", type="password", key="reg_confirm", placeholder="Enter your password again")
+            if st.button("Register 🚀", use_container_width=True, key="reg_btn"):
+                if new_user and new_pass and confirm_pass:
+                    if new_pass != confirm_pass:
+                        st.error("❌ Passwords do not match!")
+                    else:
+                        success, msg = register_user(new_user, new_pass)
+                        if success:
+                            st.session_state.reg_success = True
+                            st.rerun()
+                        else:
+                            st.error(f"❌ {msg}")
+                else:
+                    st.warning("⚠️ Please fill in all fields!")
+
         with tab3:
-            # ... guest tab unchanged ...
-            pass
+            st.markdown("### Guest Mode")
+            st.info("⚠️ History will not be saved in Guest Mode!")
+            if st.button("Guest Login 👤", use_container_width=True, key="guest_btn"):
+                st.session_state.logged_in = True
+                st.session_state.username = "Guest"
+                st.session_state.is_guest = True
+                st.session_state.messages = []
+                st.session_state.current_chat_id = datetime.now().strftime("%Y%m%d%H%M%S")
+                st.session_state.logout_requested = False
+                st.rerun()
 
 # ===== CHAT PAGE =====
 else:
