@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 
-# SABSE PEHLE API KEY SET KARO
 if "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
@@ -14,40 +13,16 @@ st.set_page_config(page_title="Power AI", page_icon="⚡", layout="centered")
 
 st.markdown("""
 <style>
-    .stApp {
-        background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 50%, #0a0a0a 100%);
-    }
-    .stChatInputContainer {
-        background-color: #1a0a2e !important;
-        border: 1px solid #7b2fff !important;
-        border-radius: 15px !important;
-    }
+    .stApp { background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 50%, #0a0a0a 100%); }
+    .stChatInputContainer { background-color: #1a0a2e !important; border: 1px solid #7b2fff !important; border-radius: 15px !important; }
     .stChatInputContainer textarea { color: white !important; }
-    .stChatMessage[data-testid="stChatMessageUser"] {
-        background: linear-gradient(135deg, #2d1b69, #7b2fff) !important;
-        border-radius: 15px !important;
-        color: white !important;
-    }
-    .stChatMessage[data-testid="stChatMessageAssistant"] {
-        background-color: #1a1a2e !important;
-        border: 1px solid #7b2fff !important;
-        border-radius: 15px !important;
-        color: white !important;
-    }
+    .stChatMessage[data-testid="stChatMessageUser"] { background: linear-gradient(135deg, #2d1b69, #7b2fff) !important; border-radius: 15px !important; color: white !important; }
+    .stChatMessage[data-testid="stChatMessageAssistant"] { background-color: #1a1a2e !important; border: 1px solid #7b2fff !important; border-radius: 15px !important; color: white !important; }
     * { color: white !important; }
     .main-header { text-align: center; padding: 20px 0; }
-    .main-header h1 {
-        font-size: 3em;
-        background: linear-gradient(90deg, #7b2fff, #ff2fff, #7b2fff);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: 900;
-        letter-spacing: 3px;
-    }
+    .main-header h1 { font-size: 3em; background: linear-gradient(90deg, #7b2fff, #ff2fff, #7b2fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900; letter-spacing: 3px; }
     .main-header p { color: #aaa !important; font-size: 1em; }
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    #MainMenu {visibility: hidden;} footer {visibility: hidden;} header {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -90,19 +65,17 @@ for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.write(msg["content"])
 
-user_input = st.chat_input("⚡Ask Anything To Power AI ...")
+user_input = st.chat_input("⚡ Ask Anything To Power AI...")
 
 if user_input:
     with st.chat_message("user"):
         st.write(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input})
-
     with st.spinner("⚡ Power AI soch raha hai..."):
         response = chatbot.invoke(
             {"input": user_input},
             config={"configurable": {"session_id": "user1"}}
         )
-
     with st.chat_message("assistant"):
         st.write(response.content)
     st.session_state.messages.append({"role": "assistant", "content": response.content})
