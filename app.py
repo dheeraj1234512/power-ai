@@ -644,12 +644,17 @@ else:
         st.session_state.messages.append({"role": "user", "content": user_input})
 
         with st.spinner("⚡ Thinking..."):
-            response = chatbot.invoke(
-                {"input": user_input},
-                config={"configurable": {"session_id": st.session_state.current_chat_id}}
-            )
-
-        bot_reply = response.content
+            try:
+                response = chatbot.invoke(
+                    {"input": user_input},
+                    config={"configurable": {"session_id": st.session_state.current_chat_id}}
+                )
+                bot_reply = response.content
+            except Exception as e:
+                if "rate_limit" in str(e).lower() or "429" in str(e):
+                    bot_reply = "⚡ Server busy hai! 2 minute baad dobara try karo 🙏"
+                else:
+                    bot_reply = "Kuch error hua, dobara try karo!"
         with st.chat_message("assistant"):
             st.write(bot_reply)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
