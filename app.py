@@ -118,8 +118,8 @@ div[data-testid="stDecoration"] {
 .stTextInput input:focus,
 .stChatInput textarea:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(79,124,255,0.15);
-    outline: none;
+    box-shadow: none !important;
+    outline: none !important;
 }
 
 /* placeholder */
