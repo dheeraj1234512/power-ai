@@ -656,7 +656,16 @@ else:
                 else:
                     bot_reply = "Some error occurred!"
         with st.chat_message("assistant"):
-            st.write(bot_reply)
+            # Typing animation
+            placeholder = st.empty()
+            displayed = ""
+            for char in bot_reply:
+                displayed += char
+                placeholder.markdown(displayed + "▌")
+            placeholder.markdown(displayed)
+
+            # Copy button
+            st.button("📋 Copy", key=f"copy_{len(st.session_state.messages)}")
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
         # Save
