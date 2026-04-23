@@ -254,6 +254,36 @@ header {
 /* DO NOT HIDE HEADER (fixes toggle) */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
+            /* ===== REMOVE UGLY RED FOCUS ===== */
+
+/* remove default outline everywhere */
+input:focus,
+textarea:focus,
+select:focus,
+button:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Streamlit specific fix */
+.stTextInput input:focus,
+.stChatInput textarea:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15) !important;
+}
+
+/* remove red glow (some browsers) */
+input:focus-visible,
+textarea:focus-visible {
+    outline: none !important;
+}
+
+/* optional: remove invalid red border */
+input:invalid,
+textarea:invalid {
+    box-shadow: none !important;
+    border-color: var(--border) !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
