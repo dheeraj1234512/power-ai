@@ -307,9 +307,9 @@ def get_sheets():
         return chat_sheet, users_sheet
     except Exception as e:
         if "rate_limit" in str(e).lower() or "429" in str(e):
-            bot_reply = "⚡ Abhi bahut zyada requests aa rahe hain! Thodi der baad dobara try karo! 🙏"
+            bot_reply = "⚡ Just Wait 🙏"
         else:
-            bot_reply = "Kuch error hua, dobara try karo!"
+            bot_reply = f"Somthing Error!"
         return None, None
 
 def hash_password(password):
