@@ -4,13 +4,13 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import hashlib
+import secrets
 
 if "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
 from langchain_groq import ChatGroq
 from langchain_community.chat_message_histories import ChatMessageHistory
-from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 
@@ -178,6 +178,7 @@ div[data-testid="stDecoration"] {
 .stTabs [aria-selected="true"] {
     color: var(--text);
     border-bottom: none !important;
+}
 
 /* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar {
@@ -207,86 +208,7 @@ div[data-testid="stDecoration"] {
 
 /* ===== CLEANUP ===== */
 #MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-            .stChatMessage {
-    border: none !important;
-    padding: 0 !important;
-    margin: 8px 0 !important;
-    background: transparent !important;
-}
-
-/* USER MESSAGE (RIGHT SIDE) */
-.stChatMessage[data-testid="stChatMessageUser"] {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.stChatMessage[data-testid="stChatMessageUser"] > div {
-    background: #1f2a37;
-    color: #ffffff;
-    padding: 10px 14px;
-    border-radius: 18px 18px 4px 18px;
-    max-width: 80%;
-    font-size: 0.95rem;
-}
-
-/* ASSISTANT MESSAGE (LEFT SIDE) */
-.stChatMessage[data-testid="stChatMessageAssistant"] {
-    display: flex;
-    justify-content: flex-start;
-}
-
-.stChatMessage[data-testid="stChatMessageAssistant"] > div {
-    background: #111823;
-    color: #e8eef5;
-    padding: 10px 14px;
-    border-radius: 18px 18px 18px 4px;
-    max-width: 80%;
-    font-size: 0.95rem;
-    border: 1px solid rgba(255,255,255,0.06);
-}
-
-/* MOBILE OPTIMIZATION */
-@media (max-width: 768px) {
-    .stChatMessage[data-testid="stChatMessageUser"] > div,
-    .stChatMessage[data-testid="stChatMessageAssistant"] > div {
-        max-width: 92%;
-        font-size: 0.9rem;
-    }
-}
-            [data-testid="stSidebar"] {
-    background: #0f141b !important;
-    border-right: 1px solid rgba(255,255,255,0.06);
-}
-
-/* sidebar items */
-.chat-item {
-    padding: 10px 12px;
-    border-radius: 10px;
-    transition: 0.2s ease;
-    color: #94a3b8;
-    font-size: 0.9rem;
-}
-
-.chat-item:hover {
-    background: rgba(255,255,255,0.04);
-    color: #ffffff;
-}
-
-/* active chat */
-.chat-item-active {
-    background: rgba(79,124,255,0.12);
-    color: #ffffff;
-    border-left: 2px solid #4f7cff;
-}
-
-/* sidebar title */
-.sidebar-header h2 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #ffffff;
-    letter-spacing: 0.5px;
-}            
+footer {visibility: hidden;}            
 </style>
 """, unsafe_allow_html=True)
 
@@ -309,10 +231,49 @@ def get_sheets():
         st.error(f"Sheet Error: {e}")
         return None, None
 
-def hash_password(password):
-    return hashlib.sha256(password.encode()).hexdigest()
+def hash_password(password, salt=None):
+    """Hash password with salt. If salt is None, generate a new one."""
+    if salt is None:
+        salt = secrets.token_hex(16)
+    hashed = hashlib.sha256((salt + password).encode()).hexdigest()
+    return f"{salt}${hashed}"
+
+def verify_password(stored_hash, password):
+    """Verify password against stored hash."""
+    try:
+        salt, hashed = stored_hash.split("$")
+        return hash_password(password, salt) == stored_hash
+    except ValueError:
+        # Fallback for old unsalted hashes
+        return hashlib.sha256(password.encode()).hexdigest() == stored_hash
+
+def validate_username(username):
+    """Validate username format."""
+    if not username or len(username) < 3:
+        return False, "Username must be at least 3 characters"
+    if len(username) > 20:
+        return False, "Username must be less than 20 characters"
+    if not username.replace("_", "").replace("-", "").isalnum():
+        return False, "Username can only contain letters, numbers, hyphens, and underscores"
+    return True, ""
+
+def validate_password(password):
+    """Validate password strength."""
+    if not password or len(password) < 6:
+        return False, "Password must be at least 6 characters"
+    if len(password) > 128:
+        return False, "Password is too long"
+    return True, ""
 
 def register_user(username, password):
+    valid_user, user_msg = validate_username(username)
+    if not valid_user:
+        return False, user_msg
+
+    valid_pass, pass_msg = validate_password(password)
+    if not valid_pass:
+        return False, pass_msg
+
     _, users_sheet = get_sheets()
     if users_sheet:
         users = users_sheet.get_all_records()
@@ -327,22 +288,27 @@ def login_user(username, password):
     _, users_sheet = get_sheets()
     if users_sheet:
         users = users_sheet.get_all_records()
-        hashed = hash_password(password)
         for user in users:
-            if user["Username"] == username and user["Password"] == hashed:
+            if user["Username"] == username and verify_password(user["Password"], password):
                 return True
     return False
 
 def save_chat(username, question, answer, chat_id):
     chat_sheet, _ = get_sheets()
     if chat_sheet:
-        chat_sheet.append_row([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), question, answer, username, chat_id])
+        chat_sheet.append_row([
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            question,
+            answer,
+            username,
+            chat_id
+        ])
 
 def get_user_history(username):
     chat_sheet, _ = get_sheets()
     if chat_sheet:
         data = chat_sheet.get_all_records()
-        return [row for row in data if row["Session ID"] == username]
+        return [row for row in data if row.get("Username") == username]
     return []
 
 # ===== SESSION STATE =====
@@ -399,11 +365,11 @@ if not st.session_state.logged_in:
                         # load history
                         history = get_user_history(username)
                         for row in history:
-                            cid = row.get("Chat ID", "default")
+                            cid = row.get("Session ID") or row.get("Chat ID") or "default"
                             if cid not in st.session_state.all_chats:
                                 st.session_state.all_chats[cid] = []
-                            st.session_state.all_chats[cid].append({"role": "user", "content": row["User Question"]})
-                            st.session_state.all_chats[cid].append({"role": "assistant", "content": row["Bot Answer"]})
+                            st.session_state.all_chats[cid].append({"role": "user", "content": row.get("User Question", "")})
+                            st.session_state.all_chats[cid].append({"role": "assistant", "content": row.get("Bot Answer", "")})
 
                         # New Chat
                         new_id = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -513,19 +479,12 @@ else:
     st.divider()
 
     # AI Setup
-
-    tools = [
-        {
-            "type": "web_search_20250305",
-            "name": "web_search"
-        }
-    ]
     llm = ChatGroq(
-    model="llama-3.3-70b-versatile",
-    temperature=0.2
-)
+        model="llama-3.3-70b-versatile",
+        temperature=0.2
+    )
     prompt = ChatPromptTemplate.from_messages([
-    ("system", f"""
+        ("system", f"""
     You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.
 
     ═══════════════════════════════════
@@ -546,30 +505,10 @@ else:
     🌐 LANGUAGE INTELLIGENCE (STRICT RULE)
     ═══════════════════════════════════
     - ALWAYS match user's language style:
-    • English → English  
-    • Hindi → Hindi  
+    • English → English
+    • Hindi → Hindi
     • Hinglish → Hinglish (natural, not forced)
     - Never switch language unless user does.
-
-    ═══════════════════════════════════
-    🔎 WEB SEARCH DECISION SYSTEM
-    ═══════════════════════════════════
-    You MUST use web search when:
-    - Query involves **latest updates (2026+)**
-    - Topics like:
-    • New tech (iPhone 17, AI tools, gadgets)
-    • Current prices, specs, comparisons
-    • News, trends, live data
-    • Company updates or recent releases
-
-    DO NOT search when:
-    - Basic concepts (e.g., "What is Apex?")
-    - Stable knowledge (math, theory, definitions)
-
-    After searching:
-    - Extract only **relevant, accurate insights**
-    - Summarize in a **clean and structured format**
-    - Avoid raw dumps or unnecessary details
 
     ═══════════════════════════════════
     ⚡ RESPONSE STYLE (VERY IMPORTANT)
@@ -597,7 +536,7 @@ else:
     ⚠️ STRICT DON'Ts
     ═══════════════════════════════════
     - Do NOT hallucinate facts
-    - Do NOT guess outdated info → search instead
+    - Do NOT guess outdated info
     - Do NOT give generic ChatGPT-style answers
     - Do NOT over-explain simple things
 
@@ -641,12 +580,15 @@ else:
         st.session_state.messages.append({"role": "user", "content": user_input})
 
         with st.spinner("⚡ Thinking..."):
-            response = chatbot.invoke(
-                {"input": user_input},
-                config={"configurable": {"session_id": st.session_state.current_chat_id}}
-            )
+            try:
+                response = chatbot.invoke(
+                    {"input": user_input},
+                    config={"configurable": {"session_id": st.session_state.current_chat_id}}
+                )
+                bot_reply = response.content
+            except Exception as e:
+                bot_reply = f"⚠️ Error: Unable to process your request. Please try again.\n\n(Error: {str(e)})"
 
-        bot_reply = response.content
         with st.chat_message("assistant"):
             st.write(bot_reply)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
