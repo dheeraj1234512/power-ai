@@ -306,7 +306,10 @@ def get_sheets():
         users_sheet = workbook.worksheet("Users")
         return chat_sheet, users_sheet
     except Exception as e:
-        st.error(f"Sheet Error: {e}")
+        if "rate_limit" in str(e).lower() or "429" in str(e):
+            bot_reply = "⚡ Just Wait 🙏"
+        else:
+            bot_reply = f"Somthing Error!"
         return None, None
 
 def hash_password(password):
