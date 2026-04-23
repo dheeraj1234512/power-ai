@@ -396,7 +396,7 @@ if not st.session_state.logged_in:
                         st.session_state.messages = []
                         st.session_state.all_chats = {}
 
-                        # Purani history load karo aur chats mein group karo
+                        # load history
                         history = get_user_history(username)
                         for row in history:
                             cid = row.get("Chat ID", "default")
@@ -405,7 +405,7 @@ if not st.session_state.logged_in:
                             st.session_state.all_chats[cid].append({"role": "user", "content": row["User Question"]})
                             st.session_state.all_chats[cid].append({"role": "assistant", "content": row["Bot Answer"]})
 
-                        # Naya chat shuru karo
+                        # New Chat
                         new_id = datetime.now().strftime("%Y%m%d%H%M%S")
                         st.session_state.current_chat_id = new_id
                         st.session_state.messages = []
@@ -467,12 +467,12 @@ else:
 
         st.divider()
 
-        # Purani chats dikhao
+        # Show Old Chats
         if not st.session_state.is_guest and st.session_state.all_chats:
             st.markdown("**💬 Old Chats:**")
             for chat_id, chat_msgs in reversed(list(st.session_state.all_chats.items())):
                 if chat_msgs:
-                    # Pehla sawaal dikhao chat ka naam ki tarah
+                    # Show Question snippet as title
                     first_q = chat_msgs[0]["content"][:30] + "..." if len(chat_msgs[0]["content"]) > 30 else chat_msgs[0]["content"]
                     is_active = chat_id == st.session_state.current_chat_id
                     css_class = "chat-item chat-item-active" if is_active else "chat-item"
@@ -513,7 +513,7 @@ else:
     st.divider()
 
     # AI Setup
-    # AI Setup ke just pehle ye add karo
+
     tools = [
         {
             "type": "web_search_20250305",
@@ -624,7 +624,7 @@ else:
         history_messages_key="history"
     )
 
-    # Messages dikhao
+    # Show Message
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
@@ -648,7 +648,7 @@ else:
             st.write(bot_reply)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
-        # Save karo
+        # Save
         if not st.session_state.is_guest:
             save_chat(st.session_state.username, user_input, bot_reply, st.session_state.current_chat_id)
             st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()

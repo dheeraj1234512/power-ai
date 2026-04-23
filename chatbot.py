@@ -4,10 +4,10 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from dotenv import load_dotenv
 
-# API key load karo
+# Load API Key from .env file
 load_dotenv()
 
-# Groq AI Model (FREE!)
+# Groq AI Model
 llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.5)
 
 # Prompt Template
@@ -70,7 +70,7 @@ Give responses that are:
     ("human", "{input}")
 ])
 
-# Chain banao
+# Make Chain
 chain = prompt | llm
 
 # Memory store
@@ -81,7 +81,7 @@ def get_session_history(session_id: str):
         store[session_id] = ChatMessageHistory()
     return store[session_id]
 
-# Memory ke saath chain
+# Run With Memory
 chatbot = RunnableWithMessageHistory(
     chain,
     get_session_history,
@@ -89,7 +89,7 @@ chatbot = RunnableWithMessageHistory(
     history_messages_key="history"
 )
 
-# Chatbot chalu karo!
+# Start Chatbot
 print("🤖 AI Chatbot Ready! (For Close Type 'quit')\n")
 
 while True:
