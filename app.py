@@ -39,31 +39,27 @@ st.markdown("""
     z-index: 0;
 }
 
-/* ===== SIDEBAR ===== */
+/* ===== SIDEBAR BASE ===== */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #0d0520 0%, #0a0a1a 100%) !important;
-    border-right: 1px solid rgba(123, 47, 255, 0.3) !important;
-}
-[data-testid="stSidebar"] {
-    color: #e2d9f3 !important;
+    border-right: 1px solid rgba(123, 47, 255, 0.25) !important;
+    padding-top: 10px;
 }
 
-/* Text elements only */
+/* Sidebar content text only (SAFE targeting) */
 [data-testid="stSidebar"] p,
 [data-testid="stSidebar"] span,
 [data-testid="stSidebar"] label,
 [data-testid="stSidebar"] div {
     color: #e2d9f3 !important;
 }
-button[kind="header"] {
-    z-index: 9999 !important;
-    position: relative !important;
-}
 
+/* ===== HEADER ===== */
 .sidebar-header {
     text-align: center;
     padding: 10px 0 20px 0;
 }
+
 .sidebar-header h2 {
     font-family: 'Orbitron', sans-serif;
     font-size: 1.4em;
@@ -74,26 +70,78 @@ button[kind="header"] {
     letter-spacing: 3px;
 }
 
+/* ===== NEW CHAT BUTTON ===== */
+[data-testid="stSidebar"] .stButton button {
+    background: linear-gradient(135deg, #7b2fff, #ff2fff) !important;
+    border: none !important;
+    border-radius: 10px !important;
+    color: white !important;
+    font-weight: 600 !important;
+    letter-spacing: 1px;
+    transition: 0.3s ease;
+}
+
+[data-testid="stSidebar"] .stButton button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(123, 47, 255, 0.6);
+}
+
+/* ===== CHAT LIST ITEMS ===== */
 .chat-item {
-    background: rgba(123, 47, 255, 0.1);
+    background: rgba(123, 47, 255, 0.08);
     border: 1px solid rgba(123, 47, 255, 0.2);
     border-radius: 10px;
     padding: 10px 14px;
-    margin: 5px 0;
+    margin: 6px 0;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
     font-size: 0.9em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+/* Hover glow */
 .chat-item:hover {
     background: rgba(123, 47, 255, 0.25);
-    border-color: rgba(123, 47, 255, 0.5);
+    border-color: rgba(123, 47, 255, 0.6);
+    box-shadow: 0 0 12px rgba(123, 47, 255, 0.4);
 }
+
+/* Active chat */
 .chat-item-active {
-    background: rgba(123, 47, 255, 0.3) !important;
-    border-color: rgba(123, 47, 255, 0.8) !important;
+    background: rgba(123, 47, 255, 0.35) !important;
+    border-color: rgba(123, 47, 255, 0.9) !important;
+    box-shadow: 0 0 15px rgba(123, 47, 255, 0.6);
+}
+
+/* ===== DIVIDER ===== */
+[data-testid="stSidebar"] hr {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, #7b2fff, transparent);
+    margin: 15px 0;
+}
+
+/* ===== SCROLLBAR ===== */
+[data-testid="stSidebar"] ::-webkit-scrollbar {
+    width: 5px;
+}
+
+[data-testid="stSidebar"] ::-webkit-scrollbar-thumb {
+    background: linear-gradient(#7b2fff, #ff2fff);
+    border-radius: 10px;
+}
+
+/* ===== TOGGLE BUTTON FIX ===== */
+button[kind="header"] {
+    z-index: 9999 !important;
+    position: relative !important;
+}
+
+/* Ensure toggle icon visible */
+button[kind="header"] svg {
+    fill: #c084fc !important;
 }
 
 /* ===== MAIN HEADER ===== */
