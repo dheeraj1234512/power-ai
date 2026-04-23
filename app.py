@@ -44,7 +44,21 @@ st.markdown("""
     background: linear-gradient(180deg, #0d0520 0%, #0a0a1a 100%) !important;
     border-right: 1px solid rgba(123, 47, 255, 0.3) !important;
 }
-[data-testid="stSidebar"] * { color: #e2d9f3 !important; }
+[data-testid="stSidebar"] {
+    color: #e2d9f3 !important;
+}
+
+/* Text elements only */
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] label,
+[data-testid="stSidebar"] div {
+    color: #e2d9f3 !important;
+}
+button[kind="header"] {
+    z-index: 9999 !important;
+    position: relative !important;
+}
 
 .sidebar-header {
     text-align: center;
