@@ -16,7 +16,7 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 
 SHEET_ID = "1KZ4bnjGkOAjCy_vto-ESkcyl7LessM4IQmfMlSICFC0"
 
-st.set_page_config(page_title="Power AI", page_icon="⚡", layout="wide")
+st.set_page_config(page_title="Power AI", page_icon="⚡", layout="wide",initial_sidebar_state="expanded")
 
 st.markdown("""
 <style>
@@ -305,7 +305,28 @@ img[alt*="github"],
 svg[aria-label*="github"] {
     display: none !important;
     visibility: hidden !important;
-}         
+} 
+            header[data-testid="stHeader"] {
+    background: transparent !important;
+    height: 0px !important;
+    visibility: hidden !important;
+}
+
+div[data-testid="stDecoration"] {
+    display: none !important;
+}
+
+div[data-testid="stToolbar"] {
+    display: none !important;
+}
+
+/* mobile white bar fix */
+@media (max-width: 768px) {
+    header {
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+}        
 </style>
 """, unsafe_allow_html=True)
 
