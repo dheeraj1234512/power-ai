@@ -254,52 +254,48 @@ header {
 /* DO NOT HIDE HEADER (fixes toggle) */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
- /* ===== MOBILE INPUT VISIBILITY FIX ===== */
+ 
+/* ================================
+   AUTH INPUT - FINAL MOBILE FIX
+================================ */
 
-/* ensure readable text everywhere */
+/* Force input text visibility */
 .stTextInput input,
-.stChatInput textarea,
-input,
-textarea {
-    color: #f1f5f9 !important; /* brighter than current */
-    -webkit-text-fill-color: #f1f5f9 !important;
+input {
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
     opacity: 1 !important;
+    caret-color: #ffffff !important;
 }
 
-/* placeholder visibility improved */
-.stTextInput input::placeholder,
-.stChatInput textarea::placeholder {
-    color: rgba(148, 163, 184, 0.7) !important;
-    opacity: 1 !important;
-}
-
-/* autofill fix (VERY IMPORTANT for mobile chrome) */
+/* Fix autofill (main culprit) */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-textarea:-webkit-autofill {
-    -webkit-text-fill-color: #f1f5f9 !important;
-    box-shadow: 0 0 0px 1000px var(--bg-secondary) inset !important;
+input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #ffffff !important;
+    box-shadow: 0 0 0px 1000px #151922 inset !important;
     transition: background-color 9999s ease-in-out 0s;
 }
 
-/* label visibility (mobile readability) */
-.stTextInput label {
-    color: #cbd5e1 !important;
-    font-weight: 500 !important;
+/* Placeholder clean visibility */
+.stTextInput input::placeholder {
+    color: rgba(255, 255, 255, 0.45) !important;
+    opacity: 1 !important;
 }
 
-/* mobile extra safety */
+/* Label better contrast */
+.stTextInput label {
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Mobile hard fix */
 @media (max-width: 768px) {
     .stTextInput input {
-        background: var(--bg-secondary) !important;
+        background: #151922 !important;
         color: #ffffff !important;
+        font-size: 1rem !important;
     }
-
-    .stTextInput label {
-        font-size: 0.85rem !important;
-    }
-}          
+}
 </style>
 """, unsafe_allow_html=True)
 
