@@ -254,36 +254,68 @@ header {
 /* DO NOT HIDE HEADER (fixes toggle) */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-            /* ===== REMOVE UGLY RED FOCUS ===== */
+ /* ===== FORCE REMOVE RED FOCUS RING ===== */
 
-/* remove default outline everywhere */
-input:focus,
-textarea:focus,
-select:focus,
-button:focus {
+/* all inputs */
+input,
+textarea,
+select {
     outline: none !important;
     box-shadow: none !important;
 }
 
-/* Streamlit specific fix */
+/* on focus */
+input:focus,
+textarea:focus,
+select:focus {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: var(--accent) !important;
+}
+
+/* focus-visible (chrome issue fix) */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* streamlit internal elements */
+.stTextInput input,
+.stChatInput textarea {
+    outline: none !important;
+    box-shadow: none !important;
+    border: 1px solid var(--border) !important;
+}
+
+/* focused state */
 .stTextInput input:focus,
 .stChatInput textarea:focus {
-    border-color: var(--accent) !important;
-    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15) !important;
-}
-
-/* remove red glow (some browsers) */
-input:focus-visible,
-textarea:focus-visible {
     outline: none !important;
+    box-shadow: none !important;
+    border: 1px solid var(--accent) !important;
 }
 
-/* optional: remove invalid red border */
+/* remove red invalid styles */
 input:invalid,
 textarea:invalid {
     box-shadow: none !important;
     border-color: var(--border) !important;
 }
+
+/* remove autofill red/yellow (chrome fix) */
+input:-webkit-autofill,
+textarea:-webkit-autofill {
+    box-shadow: 0 0 0px 1000px var(--bg-secondary) inset !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
+}
+
+/* extra safety (rare streamlit cases) */
+[data-baseweb="input"] input:focus {
+    outline: none !important;
+    box-shadow: none !important;
+}           
 </style>
 """, unsafe_allow_html=True)
 
