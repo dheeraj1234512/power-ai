@@ -4,19 +4,19 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import hashlib
-from langchain_tavily import TavilySearch
 
 if "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
-search = TavilySearch(max_results=3)
-os.environ["TAVILY_API_KEY"] = st.secrets["TAVILY_API_KEY"]
-search = TavilySearchResults(max_results=3)
+
+if "TAVILY_API_KEY" in st.secrets:
+    os.environ["TAVILY_API_KEY"] = st.secrets["TAVILY_API_KEY"]
 
 from langchain_groq import ChatGroq
 from langchain_community.chat_message_histories import ChatMessageHistory
-from langchain_community.tools import DuckDuckGoSearchRun, TavilySearchResults
+from langchain_tavily import TavilySearch
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain.agents import AgentExecutor, create_tool_calling_agent
 
 SHEET_ID = "1KZ4bnjGkOAjCy_vto-ESkcyl7LessM4IQmfMlSICFC0"
 
