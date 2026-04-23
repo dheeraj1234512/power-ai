@@ -520,7 +520,7 @@ else:
             "name": "web_search"
         }
     ]
-    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.5)
+    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
     prompt = ChatPromptTemplate.from_messages([
     ("system", f"""
     You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.

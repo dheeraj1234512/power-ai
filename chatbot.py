@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Groq AI Model
-llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.5)
+llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
 
 # Prompt Template
 prompt = ChatPromptTemplate.from_messages([
