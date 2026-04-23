@@ -39,109 +39,81 @@ st.markdown("""
     z-index: 0;
 }
 
-/* ===== SIDEBAR BASE ===== */
-[data-testid="stSidebar"] {
-    background: linear-gradient(180deg, #0d0520 0%, #0a0a1a 100%) !important;
-    border-right: 1px solid rgba(123, 47, 255, 0.25) !important;
-    padding-top: 10px;
-}
-
-/* Sidebar content text only (SAFE targeting) */
-[data-testid="stSidebar"] p,
-[data-testid="stSidebar"] span,
-[data-testid="stSidebar"] label,
-[data-testid="stSidebar"] div {
-    color: #e2d9f3 !important;
+/* ===== SIDEBAR ROOT (SAFE) ===== */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(180deg, #0d0520, #0a0a1a);
+    border-right: 1px solid rgba(123, 47, 255, 0.2);
 }
 
 /* ===== HEADER ===== */
 .sidebar-header {
     text-align: center;
-    padding: 10px 0 20px 0;
+    padding: 12px 0 18px 0;
 }
 
 .sidebar-header h2 {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.4em;
+    font-size: 1.3em;
+    font-weight: 800;
     background: linear-gradient(90deg, #7b2fff, #ff2fff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-weight: 900;
-    letter-spacing: 3px;
+    letter-spacing: 2px;
 }
 
-/* ===== NEW CHAT BUTTON ===== */
-[data-testid="stSidebar"] .stButton button {
-    background: linear-gradient(135deg, #7b2fff, #ff2fff) !important;
-    border: none !important;
-    border-radius: 10px !important;
-    color: white !important;
-    font-weight: 600 !important;
-    letter-spacing: 1px;
-    transition: 0.3s ease;
+/* ===== BUTTON (SAFE TARGETING) ===== */
+section[data-testid="stSidebar"] .stButton > button {
+    background: linear-gradient(135deg, #7b2fff, #ff2fff);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px;
+    font-weight: 600;
+    transition: 0.25s ease;
 }
 
-[data-testid="stSidebar"] .stButton button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(123, 47, 255, 0.6);
+section[data-testid="stSidebar"] .stButton > button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(123, 47, 255, 0.5);
 }
 
-/* ===== CHAT LIST ITEMS ===== */
+/* ===== CHAT ITEMS ===== */
 .chat-item {
     background: rgba(123, 47, 255, 0.08);
     border: 1px solid rgba(123, 47, 255, 0.2);
-    border-radius: 10px;
-    padding: 10px 14px;
-    margin: 6px 0;
-    cursor: pointer;
-    transition: all 0.25s ease;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 5px 0;
     font-size: 0.9em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: 0.2s ease;
 }
 
-/* Hover glow */
 .chat-item:hover {
-    background: rgba(123, 47, 255, 0.25);
-    border-color: rgba(123, 47, 255, 0.6);
-    box-shadow: 0 0 12px rgba(123, 47, 255, 0.4);
+    background: rgba(123, 47, 255, 0.2);
 }
 
-/* Active chat */
 .chat-item-active {
-    background: rgba(123, 47, 255, 0.35) !important;
-    border-color: rgba(123, 47, 255, 0.9) !important;
-    box-shadow: 0 0 15px rgba(123, 47, 255, 0.6);
+    background: rgba(123, 47, 255, 0.3);
+    border-color: rgba(123, 47, 255, 0.6);
 }
 
 /* ===== DIVIDER ===== */
-[data-testid="stSidebar"] hr {
+section[data-testid="stSidebar"] hr {
     border: none;
     height: 1px;
-    background: linear-gradient(90deg, transparent, #7b2fff, transparent);
-    margin: 15px 0;
+    background: rgba(123, 47, 255, 0.2);
+    margin: 12px 0;
 }
 
 /* ===== SCROLLBAR ===== */
-[data-testid="stSidebar"] ::-webkit-scrollbar {
+section[data-testid="stSidebar"] ::-webkit-scrollbar {
     width: 5px;
 }
 
-[data-testid="stSidebar"] ::-webkit-scrollbar-thumb {
-    background: linear-gradient(#7b2fff, #ff2fff);
+section[data-testid="stSidebar"] ::-webkit-scrollbar-thumb {
+    background: rgba(123, 47, 255, 0.6);
     border-radius: 10px;
-}
-
-/* ===== TOGGLE BUTTON FIX ===== */
-button[kind="header"] {
-    z-index: 9999 !important;
-    position: relative !important;
-}
-
-/* Ensure toggle icon visible */
-button[kind="header"] svg {
-    fill: #c084fc !important;
 }
 
 /* ===== MAIN HEADER ===== */
