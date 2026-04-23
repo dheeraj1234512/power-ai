@@ -7,4 +7,5 @@ langchain-core
 langchain-groq
 python-dotenv
 streamlit
-duckduckgo-search
+pandas
+tavily-python
