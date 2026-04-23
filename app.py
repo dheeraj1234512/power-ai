@@ -299,7 +299,13 @@ textarea:-webkit-autofill {
     .stTextInput label {
         font-size: 0.85rem !important;
     }
-}          
+}
+a[href*="github.com"],
+img[alt*="github"],
+svg[aria-label*="github"] {
+    display: none !important;
+    visibility: hidden !important;
+}         
 </style>
 """, unsafe_allow_html=True)
 
