@@ -1,11 +1,10 @@
-extra-streamlit-components
-google-auth
-gspread
 langchain
+langchain-groq
 langchain-community
 langchain-core
-langchain-groq
-python-dotenv
 streamlit
+python-dotenv
+gspread
+google-auth
 pandas
 tavily-python

@@ -4,13 +4,13 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import hashlib
-from langchain_tavily import TavilySearch
+from langchain_community.tools.tavily_search import TavilySearchResults
 
 if "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 
 os.environ["TAVILY_API_KEY"] = st.secrets["TAVILY_API_KEY"]
-search = TavilySearch(max_results=3)
+search = TavilySearchResults(max_results=3)
 
 from langchain_groq import ChatGroq
 from langchain_community.chat_message_histories import ChatMessageHistory
