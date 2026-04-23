@@ -2,6 +2,7 @@ langchain
 langchain-groq
 langchain-community
 langchain-core
+langchain-tavily
 streamlit
 python-dotenv
 gspread
