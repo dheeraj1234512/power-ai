@@ -208,7 +208,97 @@ div[data-testid="stDecoration"] {
 
 /* ===== CLEANUP ===== */
 #MainMenu {visibility: hidden;}
-footer {visibility: hidden;}            
+footer {visibility: hidden;}
+            .stChatMessage {
+    border: none !important;
+    padding: 0 !important;
+    margin: 8px 0 !important;
+    background: transparent !important;
+}
+
+/* USER MESSAGE (RIGHT SIDE) */
+.stChatMessage[data-testid="stChatMessageUser"] {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.stChatMessage[data-testid="stChatMessageUser"] > div {
+    background: #1f2a37;
+    color: #ffffff;
+    padding: 10px 14px;
+    border-radius: 18px 18px 4px 18px;
+    max-width: 80%;
+    font-size: 0.95rem;
+}
+
+/* ASSISTANT MESSAGE (LEFT SIDE) */
+.stChatMessage[data-testid="stChatMessageAssistant"] {
+    display: flex;
+    justify-content: flex-start;
+}
+
+.stChatMessage[data-testid="stChatMessageAssistant"] > div {
+    background: #111823;
+    color: #e8eef5;
+    padding: 10px 14px;
+    border-radius: 18px 18px 18px 4px;
+    max-width: 80%;
+    font-size: 0.95rem;
+    border: 1px solid rgba(255,255,255,0.06);
+}
+
+/* MOBILE OPTIMIZATION */
+@media (max-width: 768px) {
+    .stChatMessage[data-testid="stChatMessageUser"] > div,
+    .stChatMessage[data-testid="stChatMessageAssistant"] > div {
+        max-width: 92%;
+        font-size: 0.9rem;
+    }
+}
+            [data-testid="stSidebar"] {
+    background: #0f141b !important;
+    border-right: 1px solid rgba(255,255,255,0.06);
+}
+
+/* sidebar items */
+.chat-item {
+    padding: 10px 12px;
+    border-radius: 10px;
+    transition: 0.2s ease;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.chat-item:hover {
+    background: rgba(255,255,255,0.04);
+    color: #ffffff;
+}
+
+/* active chat */
+.chat-item-active {
+    background: rgba(79,124,255,0.12);
+    color: #ffffff;
+    border-left: 2px solid #4f7cff;
+}
+
+/* sidebar title */
+.sidebar-header h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+}
+            .chat-item,
+.stButton button,
+.stTextInput input,
+.stChatInput textarea {
+    transition: all 0.2s ease-in-out;
+}
+
+/* subtle hover lift */
+.stButton button:hover {
+    transform: translateY(-1px);
+}            
 </style>
 """, unsafe_allow_html=True)
 
