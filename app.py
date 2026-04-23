@@ -306,7 +306,28 @@ svg[aria-label*="github"] {
     display: none !important;
     visibility: hidden !important;
 } 
-                    
+      header[data-testid="stHeader"] {
+    background: transparent !important;
+    height: 3.5rem !important;
+    border-bottom: none !important;
+}
+
+/* REMOVE ONLY WHITE BACKGROUND, NOT HEADER ITSELF */
+header[data-testid="stHeader"] > div {
+    background: transparent !important;
+}
+
+/* KEEP SIDEBAR TOGGLE VISIBLE */
+button[kind="header"] {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: flex !important;
+}
+
+/* REMOVE EXTRA DECORATION ONLY */
+div[data-testid="stDecoration"] {
+    display: none !important;
+}              
 </style>
 """, unsafe_allow_html=True)
 
