@@ -21,17 +21,18 @@ st.set_page_config(page_title="Power AI", page_icon="⚡", layout="wide")
 st.markdown("""
 <style>
 /* ===== FONTS ===== */
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
 :root {
     --bg-primary: #0e1117;
     --bg-secondary: #151922;
-    --bg-glass: rgba(255, 255, 255, 0.04);
+    --bg-soft: #1c2230;
 
     --text-primary: #e6e8eb;
     --text-secondary: #9aa4b2;
 
-    --accent: #4f46e5; /* subtle indigo */
+    --accent: #4f46e5;
     --border: rgba(255, 255, 255, 0.08);
 
     --radius: 14px;
@@ -44,9 +45,9 @@ st.markdown("""
     color: var(--text-primary);
 }
 
-/* remove noisy grid */
-.stApp::before {
-    display: none;
+/* IMPORTANT: Don't hide header (fix toggle issue) */
+header {
+    visibility: visible !important;
 }
 
 /* ===== SIDEBAR ===== */
@@ -55,38 +56,55 @@ st.markdown("""
     border-right: 1px solid var(--border);
 }
 
-.sidebar-header h2 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    letter-spacing: 1px;
+/* sidebar text */
+[data-testid="stSidebar"] * {
     color: var(--text-primary);
 }
 
-/* chat list */
+/* ===== SIDEBAR HEADER ===== */
+.sidebar-header {
+    text-align: center;
+    padding: 10px 0 20px 0;
+}
+
+.sidebar-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+/* ===== CHAT LIST ===== */
 .chat-item {
     background: transparent;
     border: 1px solid transparent;
     border-radius: var(--radius);
     padding: 10px 12px;
+    margin: 4px 0;
     transition: all 0.2s ease;
     color: var(--text-secondary);
+    cursor: pointer;
 }
 
 .chat-item:hover {
-    background: var(--bg-glass);
+    background: rgba(255,255,255,0.04);
     border-color: var(--border);
     color: var(--text-primary);
 }
 
 .chat-item-active {
-    background: var(--bg-glass);
+    background: rgba(79, 70, 229, 0.15);
     border-color: var(--accent);
     color: var(--text-primary);
 }
 
-/* ===== HEADER ===== */
+/* ===== MAIN HEADER (CENTER FIX) ===== */
+.main-header {
+    text-align: center;
+    padding: 20px 10px 10px;
+}
+
 .main-header h1 {
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: 600;
     letter-spacing: 1px;
     color: var(--text-primary);
@@ -122,17 +140,14 @@ st.markdown("""
     margin: 6px 0;
 }
 
-/* user */
 .stChatMessage[data-testid="stChatMessageUser"] {
     background: #1c2230;
 }
 
-/* assistant */
 .stChatMessage[data-testid="stChatMessageAssistant"] {
     background: var(--bg-secondary);
 }
 
-/* text */
 .stChatMessage p {
     color: var(--text-primary);
     line-height: 1.5;
@@ -179,6 +194,10 @@ st.markdown("""
 }
 
 /* ===== TABS ===== */
+.stTabs [data-baseweb="tab-list"] {
+    border-bottom: 1px solid var(--border);
+}
+
 .stTabs [data-baseweb="tab"] {
     color: var(--text-secondary);
     font-size: 0.95rem;
@@ -199,10 +218,42 @@ st.markdown("""
     border-radius: 10px;
 }
 
-/* ===== CLEANUP ===== */
-#MainMenu, footer, header {
-    visibility: hidden;
+/* ===== RESPONSIVE FIXES ===== */
+@media (max-width: 768px) {
+
+    .main-header h1 {
+        font-size: 1.6rem;
+    }
+
+    .main-header p {
+        font-size: 0.7rem;
+    }
+
+    .stChatMessage {
+        padding: 10px;
+    }
+
+    .stTextInput input,
+    .stChatInput textarea {
+        font-size: 0.9rem;
+    }
 }
+
+@media (max-width: 480px) {
+
+    .main-header h1 {
+        font-size: 1.4rem;
+    }
+
+    .chat-item {
+        font-size: 0.8rem;
+    }
+}
+
+/* ===== SAFE CLEANUP ===== */
+/* DO NOT HIDE HEADER (fixes toggle) */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
 </style>
 """, unsafe_allow_html=True)
 
