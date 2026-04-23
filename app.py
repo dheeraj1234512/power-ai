@@ -254,7 +254,52 @@ header {
 /* DO NOT HIDE HEADER (fixes toggle) */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-           
+ /* ===== MOBILE INPUT VISIBILITY FIX ===== */
+
+/* ensure readable text everywhere */
+.stTextInput input,
+.stChatInput textarea,
+input,
+textarea {
+    color: #f1f5f9 !important; /* brighter than current */
+    -webkit-text-fill-color: #f1f5f9 !important;
+    opacity: 1 !important;
+}
+
+/* placeholder visibility improved */
+.stTextInput input::placeholder,
+.stChatInput textarea::placeholder {
+    color: rgba(148, 163, 184, 0.7) !important;
+    opacity: 1 !important;
+}
+
+/* autofill fix (VERY IMPORTANT for mobile chrome) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill {
+    -webkit-text-fill-color: #f1f5f9 !important;
+    box-shadow: 0 0 0px 1000px var(--bg-secondary) inset !important;
+    transition: background-color 9999s ease-in-out 0s;
+}
+
+/* label visibility (mobile readability) */
+.stTextInput label {
+    color: #cbd5e1 !important;
+    font-weight: 500 !important;
+}
+
+/* mobile extra safety */
+@media (max-width: 768px) {
+    .stTextInput input {
+        background: var(--bg-secondary) !important;
+        color: #ffffff !important;
+    }
+
+    .stTextInput label {
+        font-size: 0.85rem !important;
+    }
+}          
 </style>
 """, unsafe_allow_html=True)
 
