@@ -177,8 +177,7 @@ div[data-testid="stDecoration"] {
 
 .stTabs [aria-selected="true"] {
     color: var(--text);
-    border-bottom: 2px solid var(--accent);
-}
+    border-bottom: none !important;
 
 /* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar {
