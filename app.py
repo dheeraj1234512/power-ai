@@ -109,7 +109,7 @@ div[data-testid="stDecoration"] {
 .stTextInput input,
 .stChatInput textarea {
     background: var(--panel);
-    border: 1px solid var(--border);
+
     border-radius: var(--radius);
     color: var(--text);
     padding: 10px 12px;
