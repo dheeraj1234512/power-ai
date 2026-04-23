@@ -10,8 +10,10 @@ if "GROQ_API_KEY" in st.secrets:
 
 from langchain_groq import ChatGroq
 from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_community.tools import DuckDuckGoSearchRun
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain.agents import AgentExecutor, create_tool_calling_agent
 
 SHEET_ID = "1KZ4bnjGkOAjCy_vto-ESkcyl7LessM4IQmfMlSICFC0"
 
@@ -20,7 +22,6 @@ st.set_page_config(page_title="Power AI", page_icon="⚡", layout="wide")
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap');
-
 .stApp {
     background: radial-gradient(ellipse at top, #1a0a2e 0%, #0a0a0a 50%, #0d0015 100%);
     font-family: 'Rajdhani', sans-serif;
@@ -37,18 +38,12 @@ st.markdown("""
     pointer-events: none;
     z-index: 0;
 }
-
-/* ===== SIDEBAR ===== */
 [data-testid="stSidebar"] {
     background: linear-gradient(180deg, #0d0520 0%, #0a0a1a 100%) !important;
     border-right: 1px solid rgba(123, 47, 255, 0.3) !important;
 }
 [data-testid="stSidebar"] * { color: #e2d9f3 !important; }
-
-.sidebar-header {
-    text-align: center;
-    padding: 10px 0 20px 0;
-}
+.sidebar-header { text-align: center; padding: 10px 0 20px 0; }
 .sidebar-header h2 {
     font-family: 'Orbitron', sans-serif;
     font-size: 1.4em;
@@ -58,30 +53,18 @@ st.markdown("""
     font-weight: 900;
     letter-spacing: 3px;
 }
-
 .chat-item {
     background: rgba(123, 47, 255, 0.1);
     border: 1px solid rgba(123, 47, 255, 0.2);
     border-radius: 10px;
     padding: 10px 14px;
     margin: 5px 0;
-    cursor: pointer;
-    transition: all 0.2s ease;
     font-size: 0.9em;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: #e2d9f3;
 }
-.chat-item:hover {
-    background: rgba(123, 47, 255, 0.25);
-    border-color: rgba(123, 47, 255, 0.5);
-}
-.chat-item-active {
-    background: rgba(123, 47, 255, 0.3) !important;
-    border-color: rgba(123, 47, 255, 0.8) !important;
-}
-
-/* ===== MAIN HEADER ===== */
 .main-header { text-align: center; padding: 20px 0 10px 0; }
 .main-header h1 {
     font-family: 'Orbitron', sans-serif;
@@ -101,8 +84,6 @@ st.markdown("""
     100% { background-position: 0% 50%; }
 }
 .main-header p { color: #a78bfa !important; font-size: 0.9em; letter-spacing: 3px; text-transform: uppercase; }
-
-/* ===== LUXURY TEXT INPUT ===== */
 .stTextInput input {
     background: linear-gradient(145deg, #120826, #1a0d35) !important;
     color: #f0e6ff !important;
@@ -133,8 +114,6 @@ st.markdown("""
     letter-spacing: 1.5px !important;
     text-transform: uppercase !important;
 }
-
-/* ===== CHAT MESSAGES ===== */
 .stChatMessage[data-testid="stChatMessageUser"] {
     background: linear-gradient(135deg, #2d1b69 0%, #7b2fff 100%) !important;
     border-radius: 20px 20px 5px 20px !important;
@@ -161,8 +140,6 @@ st.markdown("""
     transform: perspective(1000px) rotateX(0deg) translateY(-2px);
 }
 .stChatMessage p, .stChatMessage div { color: #e2d9f3 !important; font-size: 1.05em !important; line-height: 1.6 !important; }
-
-/* ===== CHAT INPUT ===== */
 .stChatInput textarea {
     background: linear-gradient(145deg, #120826, #1e0d3a) !important;
     color: #f0e6ff !important;
@@ -187,8 +164,6 @@ st.markdown("""
 .stChatInput button { background: linear-gradient(135deg, #7b2fff, #ff2fff) !important; border: none !important; border-radius: 10px !important; box-shadow: 0 4px 15px rgba(123, 47, 255, 0.5) !important; transition: all 0.3s ease !important; }
 .stChatInput button:hover { transform: scale(1.1) !important; }
 .stChatInput button svg { fill: white !important; }
-
-/* ===== BUTTONS ===== */
 .stButton button {
     background: linear-gradient(135deg, #7b2fff, #ff2fff) !important;
     color: white !important;
@@ -201,31 +176,13 @@ st.markdown("""
     transition: all 0.3s ease !important;
 }
 .stButton button:hover { transform: translateY(-2px) !important; box-shadow: 0 8px 25px rgba(123, 47, 255, 0.8) !important; }
-
-/* ===== TABS ===== */
-.stTabs [data-baseweb="tab-list"] {
-    background: transparent !important;
-    border-bottom: 1px solid rgba(123, 47, 255, 0.3) !important;
-    gap: 8px !important;
-}
-.stTabs [data-baseweb="tab"] {
-    color: #a78bfa !important;
-    font-family: 'Rajdhani', sans-serif !important;
-    font-size: 1.1em !important;
-    font-weight: 600 !important;
-    letter-spacing: 1px !important;
-}
-.stTabs [aria-selected="true"] {
-    color: #ffffff !important;
-    background: rgba(123, 47, 255, 0.2) !important;
-    border-bottom: 2px solid #7b2fff !important;
-}
-
+.stTabs [data-baseweb="tab-list"] { background: transparent !important; border-bottom: 1px solid rgba(123, 47, 255, 0.3) !important; gap: 8px !important; }
+.stTabs [data-baseweb="tab"] { color: #a78bfa !important; font-family: 'Rajdhani', sans-serif !important; font-size: 1.1em !important; font-weight: 600 !important; letter-spacing: 1px !important; }
+.stTabs [aria-selected="true"] { color: #ffffff !important; background: rgba(123, 47, 255, 0.2) !important; border-bottom: 2px solid #7b2fff !important; }
 input, textarea, select, button { outline: none !important; -webkit-tap-highlight-color: transparent !important; }
 input:focus, textarea:focus { outline: none !important; }
 input:focus-visible, textarea:focus-visible { outline: none !important; }
 *:focus { outline: none !important; }
-
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: #0a0a0a; }
 ::-webkit-scrollbar-thumb { background: linear-gradient(#7b2fff, #ff2fff); border-radius: 10px; }
@@ -249,7 +206,6 @@ def get_sheets():
         users_sheet = workbook.worksheet("Users")
         return chat_sheet, users_sheet
     except Exception as e:
-        st.error(f"Sheet Error: {e}")
         return None, None
 
 def hash_password(password):
@@ -303,8 +259,6 @@ if "current_chat_id" not in st.session_state:
     st.session_state.current_chat_id = datetime.now().strftime("%Y%m%d%H%M%S")
 if "all_chats" not in st.session_state:
     st.session_state.all_chats = {}
-if "active_tab" not in st.session_state:
-    st.session_state.active_tab = "login"
 if "reg_success" not in st.session_state:
     st.session_state.reg_success = False
 
@@ -338,8 +292,6 @@ if not st.session_state.logged_in:
                         st.session_state.reg_success = False
                         st.session_state.messages = []
                         st.session_state.all_chats = {}
-
-                        # Purani history load karo aur chats mein group karo
                         history = get_user_history(username)
                         for row in history:
                             cid = row.get("Chat ID", "default")
@@ -347,8 +299,6 @@ if not st.session_state.logged_in:
                                 st.session_state.all_chats[cid] = []
                             st.session_state.all_chats[cid].append({"role": "user", "content": row["User Question"]})
                             st.session_state.all_chats[cid].append({"role": "assistant", "content": row["Bot Answer"]})
-
-                        # Naya chat shuru karo
                         new_id = datetime.now().strftime("%Y%m%d%H%M%S")
                         st.session_state.current_chat_id = new_id
                         st.session_state.messages = []
@@ -392,17 +342,12 @@ if not st.session_state.logged_in:
 else:
     # ===== SIDEBAR =====
     with st.sidebar:
-        st.markdown("""
-        <div class="sidebar-header">
-            <h2>⚡ POWER AI</h2>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-header"><h2>⚡ POWER AI</h2></div>', unsafe_allow_html=True)
 
-        # New Chat button
         if st.button("➕ New Chat", use_container_width=True):
-            new_id = datetime.now().strftime("%Y%m%d%H%M%S")
             if st.session_state.messages:
                 st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
+            new_id = datetime.now().strftime("%Y%m%d%H%M%S")
             st.session_state.current_chat_id = new_id
             st.session_state.messages = []
             st.session_state.store = {}
@@ -410,17 +355,13 @@ else:
 
         st.divider()
 
-        # Purani chats dikhao
         if not st.session_state.is_guest and st.session_state.all_chats:
             st.markdown("**💬 Purani Chats:**")
             for chat_id, chat_msgs in reversed(list(st.session_state.all_chats.items())):
                 if chat_msgs:
-                    # Pehla sawaal dikhao chat ka naam ki tarah
-                    first_q = chat_msgs[0]["content"][:30] + "..." if len(chat_msgs[0]["content"]) > 30 else chat_msgs[0]["content"]
-                    is_active = chat_id == st.session_state.current_chat_id
-                    css_class = "chat-item chat-item-active" if is_active else "chat-item"
-                    st.markdown(f'<div class="{css_class}">💬 {first_q}</div>', unsafe_allow_html=True)
-                    if st.button(f"Open", key=f"chat_{chat_id}"):
+                    first_q = chat_msgs[0]["content"][:28] + "..." if len(chat_msgs[0]["content"]) > 28 else chat_msgs[0]["content"]
+                    st.markdown(f'<div class="chat-item">💬 {first_q}</div>', unsafe_allow_html=True)
+                    if st.button("Open", key=f"chat_{chat_id}"):
                         if st.session_state.messages:
                             st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
                         st.session_state.current_chat_id = chat_id
@@ -429,21 +370,15 @@ else:
                         st.rerun()
 
         st.divider()
-
-        # User info aur logout
         if st.session_state.is_guest:
             st.markdown("👤 **Guest Mode**")
         else:
             st.markdown(f"👤 **{st.session_state.username}**")
 
         if st.button("🚪 Logout", use_container_width=True):
-            st.session_state.logged_in = False
-            st.session_state.username = ""
-            st.session_state.is_guest = False
-            st.session_state.messages = []
-            st.session_state.store = {}
-            st.session_state.all_chats = {}
-            st.session_state.reg_success = False
+            for key in ["logged_in", "username", "is_guest", "messages", "store", "all_chats", "reg_success"]:
+                if key in st.session_state:
+                    del st.session_state[key]
             st.rerun()
 
     # ===== MAIN CHAT AREA =====
@@ -455,28 +390,38 @@ else:
     """, unsafe_allow_html=True)
     st.divider()
 
-    # AI Setup
-    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
+    # ===== AI WITH WEB SEARCH =====
+    llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.5)
+    search = DuckDuckGoSearchRun()
+    tools = [search]
+
+    system_prompt = f"""You are Power AI — a powerful, intelligent AI assistant with web search capability.
+
+CURRENT DATE: {datetime.now().strftime("%B %d, %Y")}
+USER NAME: {st.session_state.username}
+
+LANGUAGE RULE — MOST IMPORTANT:
+- If user writes in ENGLISH → reply in ENGLISH only
+- If user writes in HINDI → reply in HINDI only
+- If user mixes → match their style
+- NEVER switch language on your own
+
+WEB SEARCH RULE:
+- For any current news, products, prices, events after 2024 → USE web_search tool
+- For iPhone 17, latest tech, current events → SEARCH first then answer
+- After searching, give detailed helpful answer
+
+Be accurate, helpful and always match user's language!"""
+
     prompt = ChatPromptTemplate.from_messages([
-        ("system", f"""You are Power AI — a powerful, intelligent, and helpful AI assistant created in 2026.
-
-        CRITICAL INSTRUCTIONS:
-        - Current Date: {datetime.now().strftime("%B %d, %Y")} (Always use this exact date for any time-related queries)
-        - You are a 2026 model with knowledge up to early 2026
-        - User's name: {st.session_state.username}
-        - LANGUAGE RULE: ALWAYS respond in the SAME language the user uses
-        * If user writes in English → respond in English
-        * If user writes in Hindi → respond in Hindi  
-        * If user mixes languages → match their style
-        - Be polite, helpful, and professional
-        - Never mention your training cutoff or knowledge limitations unless specifically asked
-        - For current events after early 2026, clearly state you don't have that information
-
-        Remember: Match the user's language perfectly!"""),
+        ("system", system_prompt),
         MessagesPlaceholder(variable_name="history"),
+        MessagesPlaceholder(variable_name="agent_scratchpad"),
         ("human", "{input}")
     ])
-    chain = prompt | llm
+
+    agent = create_tool_calling_agent(llm, tools, prompt)
+    agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False, max_iterations=3)
 
     def get_session_history(session_id: str):
         if session_id not in st.session_state.store:
@@ -484,17 +429,16 @@ else:
         return st.session_state.store[session_id]
 
     chatbot = RunnableWithMessageHistory(
-        chain, get_session_history,
+        agent_executor,
+        get_session_history,
         input_messages_key="input",
         history_messages_key="history"
     )
 
-    # Messages dikhao
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
 
-    # Input
     user_input = st.chat_input("⚡ Ask Anything To Power AI...")
 
     if user_input:
@@ -502,18 +446,20 @@ else:
             st.write(user_input)
         st.session_state.messages.append({"role": "user", "content": user_input})
 
-        with st.spinner("⚡ Power AI soch raha hai..."):
-            response = chatbot.invoke(
-                {"input": user_input},
-                config={"configurable": {"session_id": st.session_state.current_chat_id}}
-            )
+        with st.spinner("⚡ Power AI search kar raha hai..."):
+            try:
+                response = chatbot.invoke(
+                    {"input": user_input},
+                    config={"configurable": {"session_id": st.session_state.current_chat_id}}
+                )
+                bot_reply = response.get("output", "Kuch error hua, dobara try karo!")
+            except Exception as e:
+                bot_reply = f"Error aaya: {str(e)}"
 
-        bot_reply = response.content
         with st.chat_message("assistant"):
             st.write(bot_reply)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
-        # Save karo
         if not st.session_state.is_guest:
             save_chat(st.session_state.username, user_input, bot_reply, st.session_state.current_chat_id)
             st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
