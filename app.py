@@ -1,5 +1,4 @@
 import streamlit as st
-import json
 import os
 import gspread
 from google.oauth2.service_account import Credentials
@@ -266,7 +265,7 @@ def register_user(username, password):
                 return False, "Username already exists!"
         users_sheet.append_row([username, hash_password(password), datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
         return True, "Registration successful!"
-    return False, "Sheet connect nahi hui!"
+    return False, "Database error!"
 
 def login_user(username, password):
     _, users_sheet = get_sheets()
@@ -323,14 +322,14 @@ if not st.session_state.logged_in:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         if st.session_state.reg_success:
-            st.success("✅ Account ban gaya! Ab login karo!")
+            st.success("✅ Account Created! Login now!")
 
         tab1, tab2, tab3 = st.tabs(["🔐 Login", "📝 Register", "👤 Guest"])
 
         with tab1:
             st.markdown("### Welcome Back!")
-            username = st.text_input("Username:", key="login_user", placeholder="apna username likho")
-            password = st.text_input("Password:", type="password", key="login_pass", placeholder="apna password likho")
+            username = st.text_input("Username:", key="login_user", placeholder="Enter your username")
+            password = st.text_input("Password:", type="password", key="login_pass", placeholder="Enter your password")
             if st.button("Login ⚡", use_container_width=True, key="login_btn"):
                 if username and password:
                     if login_user(username, password):
@@ -358,17 +357,17 @@ if not st.session_state.logged_in:
                     else:
                         st.error("❌ Wrong username or password!")
                 else:
-                    st.warning("⚠️ Sab fields bharo!")
+                    st.warning("⚠️ Fill in all fields!")
 
         with tab2:
             st.markdown("### Create Account!")
-            new_user = st.text_input("Username:", key="reg_user", placeholder="naya username chuno")
-            new_pass = st.text_input("Password:", type="password", key="reg_pass", placeholder="strong password rakho")
-            confirm_pass = st.text_input("Confirm Password:", type="password", key="reg_confirm", placeholder="password dobara likho")
+            new_user = st.text_input("Username:", key="reg_user", placeholder="Enter your username")
+            new_pass = st.text_input("Password:", type="password", key="reg_pass", placeholder="Enter a strong password")
+            confirm_pass = st.text_input("Confirm Password:", type="password", key="reg_confirm", placeholder="Confirm your password")
             if st.button("Register ⚡", use_container_width=True, key="reg_btn"):
                 if new_user and new_pass and confirm_pass:
                     if new_pass != confirm_pass:
-                        st.error("❌ Passwords match nahi kar rahe!")
+                        st.error("❌ Passwords don't match!")
                     else:
                         success, msg = register_user(new_user, new_pass)
                         if success:
@@ -377,12 +376,12 @@ if not st.session_state.logged_in:
                         else:
                             st.error(f"❌ {msg}")
                 else:
-                    st.warning("⚠️ Sab fields bharo!")
+                    st.warning("⚠️ Fill in all fields!")
 
         with tab3:
             st.markdown("### Guest Mode")
-            st.info("⚠️ Guest mode mein chat history save nahi hogi!")
-            if st.button("Guest ke taur pe continue karo 👤", use_container_width=True, key="guest_btn"):
+            st.info("You are in Guest Mode!")
+            if st.button("Continue as Guest 👤", use_container_width=True, key="guest_btn"):
                 st.session_state.logged_in = True
                 st.session_state.username = "Guest"
                 st.session_state.is_guest = True
@@ -414,7 +413,7 @@ else:
 
         # Purani chats dikhao
         if not st.session_state.is_guest and st.session_state.all_chats:
-            st.markdown("**💬 Purani Chats:**")
+            st.markdown("**💬 Old Chats:**")
             for chat_id, chat_msgs in reversed(list(st.session_state.all_chats.items())):
                 if chat_msgs:
                     # Pehla sawaal dikhao chat ka naam ki tarah
@@ -452,7 +451,7 @@ else:
     st.markdown("""
     <div class="main-header">
         <h1>⚡ POWER AI</h1>
-        <p>✦ Your Intelligent Assistant — Hindi & English ✦</p>
+        <p>✦ Your Intelligent Assistant ✦</p>
     </div>
     """, unsafe_allow_html=True)
     st.divider()
@@ -582,7 +581,7 @@ else:
             st.write(user_input)
         st.session_state.messages.append({"role": "user", "content": user_input})
 
-        with st.spinner("⚡ Power AI soch raha hai..."):
+        with st.spinner("⚡ Thinking..."):
             response = chatbot.invoke(
                 {"input": user_input},
                 config={"configurable": {"session_id": st.session_state.current_chat_id}}
