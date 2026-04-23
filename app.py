@@ -20,163 +20,134 @@ st.set_page_config(page_title="Power AI", page_icon="⚡", layout="wide")
 
 st.markdown("""
 <style>
-/* ===== FONTS ===== */
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
 :root {
-    --bg-primary: #0e1117;
-    --bg-secondary: #151922;
-    --bg-soft: #1c2230;
+    --bg: #0b0f14;
+    --panel: #111823;
+    --soft: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
 
-    --text-primary: #e6e8eb;
-    --text-secondary: #9aa4b2;
+    --text: #e8eef5;
+    --muted: #93a4b5;
 
-    --accent: #4f46e5;
-    --border: rgba(255, 255, 255, 0.08);
+    --accent: #4f7cff;
 
     --radius: 14px;
 }
 
 /* ===== GLOBAL ===== */
 .stApp {
-    background: var(--bg-primary);
+    background: var(--bg);
     font-family: 'Inter', sans-serif;
-    color: var(--text-primary);
+    color: var(--text);
 }
 
-/* IMPORTANT: Don't hide header (fix toggle issue) */
-header {
-    visibility: visible !important;
+/* ===== HEADER (SAFE - DOES NOT BREAK TOGGLE) ===== */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    border: none !important;
+}
+
+/* hide only decoration */
+div[data-testid="stDecoration"] {
+    display: none !important;
 }
 
 /* ===== SIDEBAR ===== */
 [data-testid="stSidebar"] {
-    background: var(--bg-secondary);
+    background: var(--panel);
     border-right: 1px solid var(--border);
 }
 
 /* sidebar text */
 [data-testid="stSidebar"] * {
-    color: var(--text-primary);
-}
-
-/* ===== SIDEBAR HEADER ===== */
-.sidebar-header {
-    text-align: center;
-    padding: 10px 0 20px 0;
-}
-
-.sidebar-header h2 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    letter-spacing: 1px;
+    color: var(--text);
 }
 
 /* ===== CHAT LIST ===== */
 .chat-item {
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: var(--radius);
     padding: 10px 12px;
-    margin: 4px 0;
-    transition: all 0.2s ease;
-    color: var(--text-secondary);
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    color: var(--muted);
+    transition: 0.2s ease;
     cursor: pointer;
 }
 
 .chat-item:hover {
-    background: rgba(255,255,255,0.04);
+    background: var(--soft);
     border-color: var(--border);
-    color: var(--text-primary);
+    color: var(--text);
 }
 
 .chat-item-active {
-    background: rgba(79, 70, 229, 0.15);
-    border-color: var(--accent);
-    color: var(--text-primary);
+    background: rgba(79,124,255,0.12);
+    border-color: rgba(79,124,255,0.35);
+    color: var(--text);
 }
 
-/* ===== MAIN HEADER (CENTER FIX) ===== */
+/* ===== TITLE ===== */
 .main-header {
     text-align: center;
-    padding: 20px 10px 10px;
+    padding: 20px 10px;
 }
 
 .main-header h1 {
-    font-size: 2.2rem;
+    font-size: 2rem;
     font-weight: 600;
-    letter-spacing: 1px;
-    color: var(--text-primary);
+    color: var(--text);
+    letter-spacing: -0.5px;
 }
 
 .main-header p {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    letter-spacing: 1px;
+    color: var(--muted);
+    font-size: 0.85rem;
 }
 
-/* ===== INPUT ===== */
-.stTextInput input {
-    background: var(--bg-secondary);
+/* ===== INPUTS ===== */
+.stTextInput input,
+.stChatInput textarea {
+    background: var(--panel);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    color: var(--text-primary);
-    padding: 10px 14px;
-    font-size: 0.95rem;
-    transition: 0.2s ease;
+    color: var(--text);
+    padding: 10px 12px;
 }
 
-.stTextInput input:focus {
+.stTextInput input:focus,
+.stChatInput textarea:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+    box-shadow: 0 0 0 2px rgba(79,124,255,0.15);
+    outline: none;
 }
 
-/* ===== CHAT MESSAGES ===== */
+/* placeholder */
+::placeholder {
+    color: rgba(147,164,181,0.7) !important;
+}
+
+/* ===== CHAT BUBBLES ===== */
 .stChatMessage {
-    border-radius: var(--radius);
-    padding: 12px 14px;
     border: 1px solid var(--border);
-    margin: 6px 0;
+    border-radius: var(--radius);
+    padding: 12px;
+    margin: 8px 0;
 }
 
 .stChatMessage[data-testid="stChatMessageUser"] {
-    background: #1c2230;
+    background: rgba(255,255,255,0.03);
 }
 
 .stChatMessage[data-testid="stChatMessageAssistant"] {
-    background: var(--bg-secondary);
+    background: var(--panel);
 }
 
+/* text */
 .stChatMessage p {
-    color: var(--text-primary);
-    line-height: 1.5;
+    color: var(--text);
+    line-height: 1.6;
     font-size: 0.95rem;
-}
-
-/* ===== CHAT INPUT ===== */
-.stChatInput textarea {
-    background: var(--bg-secondary);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text-primary);
-    padding: 12px;
-    font-size: 1rem;
-}
-
-.stChatInput textarea:focus {
-    border-color: var(--accent);
-}
-
-/* send button */
-.stChatInput button {
-    background: var(--accent);
-    border-radius: 10px;
-    border: none;
-}
-
-.stChatInput button:hover {
-    background: #4338ca;
 }
 
 /* ===== BUTTONS ===== */
@@ -186,25 +157,26 @@ header {
     border-radius: 10px;
     border: none;
     font-weight: 500;
-    transition: 0.2s;
+    transition: 0.2s ease;
 }
 
 .stButton button:hover {
-    background: #4338ca;
+    opacity: 0.9;
+}
+
+/* ===== CHAT INPUT BUTTON ===== */
+.stChatInput button {
+    background: var(--accent) !important;
+    border-radius: 10px;
 }
 
 /* ===== TABS ===== */
-.stTabs [data-baseweb="tab-list"] {
-    border-bottom: 1px solid var(--border);
-}
-
 .stTabs [data-baseweb="tab"] {
-    color: var(--text-secondary);
-    font-size: 0.95rem;
+    color: var(--muted);
 }
 
 .stTabs [aria-selected="true"] {
-    color: var(--text-primary);
+    color: var(--text);
     border-bottom: 2px solid var(--accent);
 }
 
@@ -214,19 +186,14 @@ header {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #2a2f3a;
+    background: rgba(255,255,255,0.15);
     border-radius: 10px;
 }
 
-/* ===== RESPONSIVE FIXES ===== */
+/* ===== MOBILE RESPONSIVE ===== */
 @media (max-width: 768px) {
-
     .main-header h1 {
-        font-size: 1.6rem;
-    }
-
-    .main-header p {
-        font-size: 0.7rem;
+        font-size: 1.5rem;
     }
 
     .stChatMessage {
@@ -235,99 +202,13 @@ header {
 
     .stTextInput input,
     .stChatInput textarea {
-        font-size: 0.9rem;
+        font-size: 0.95rem;
     }
 }
 
-@media (max-width: 480px) {
-
-    .main-header h1 {
-        font-size: 1.4rem;
-    }
-
-    .chat-item {
-        font-size: 0.8rem;
-    }
-}
-
-/* ===== SAFE CLEANUP ===== */
-/* DO NOT HIDE HEADER (fixes toggle) */
+/* ===== CLEANUP ===== */
 #MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
- /* ===== MOBILE INPUT VISIBILITY FIX ===== */
-
-/* ensure readable text everywhere */
-.stTextInput input,
-.stChatInput textarea,
-input,
-textarea {
-    color: #f1f5f9 !important; /* brighter than current */
-    -webkit-text-fill-color: #f1f5f9 !important;
-    opacity: 1 !important;
-}
-
-/* placeholder visibility improved */
-.stTextInput input::placeholder,
-.stChatInput textarea::placeholder {
-    color: rgba(148, 163, 184, 0.7) !important;
-    opacity: 1 !important;
-}
-
-/* autofill fix (VERY IMPORTANT for mobile chrome) */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-textarea:-webkit-autofill {
-    -webkit-text-fill-color: #f1f5f9 !important;
-    box-shadow: 0 0 0px 1000px var(--bg-secondary) inset !important;
-    transition: background-color 9999s ease-in-out 0s;
-}
-
-/* label visibility (mobile readability) */
-.stTextInput label {
-    color: #cbd5e1 !important;
-    font-weight: 500 !important;
-}
-
-/* mobile extra safety */
-@media (max-width: 768px) {
-    .stTextInput input {
-        background: var(--bg-secondary) !important;
-        color: #ffffff !important;
-    }
-
-    .stTextInput label {
-        font-size: 0.85rem !important;
-    }
-}
-a[href*="github.com"],
-img[alt*="github"],
-svg[aria-label*="github"] {
-    display: none !important;
-    visibility: hidden !important;
-} 
-      header[data-testid="stHeader"] {
-    background: transparent !important;
-    height: 3.5rem !important;
-    border-bottom: none !important;
-}
-
-/* REMOVE ONLY WHITE BACKGROUND, NOT HEADER ITSELF */
-header[data-testid="stHeader"] > div {
-    background: transparent !important;
-}
-
-/* KEEP SIDEBAR TOGGLE VISIBLE */
-button[kind="header"] {
-    visibility: visible !important;
-    opacity: 1 !important;
-    display: flex !important;
-}
-
-/* REMOVE EXTRA DECORATION ONLY */
-div[data-testid="stDecoration"] {
-    display: none !important;
-}              
+footer {visibility: hidden;}            
 </style>
 """, unsafe_allow_html=True)
 
