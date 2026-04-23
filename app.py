@@ -287,17 +287,6 @@ footer {visibility: hidden;}
     font-weight: 600;
     color: #ffffff;
     letter-spacing: 0.5px;
-}
-            .chat-item,
-.stButton button,
-.stTextInput input,
-.stChatInput textarea {
-    transition: all 0.2s ease-in-out;
-}
-
-/* subtle hover lift */
-.stButton button:hover {
-    transform: translateY(-1px);
 }            
 </style>
 """, unsafe_allow_html=True)
