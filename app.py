@@ -664,10 +664,6 @@ else:
                 displayed += char
                 placeholder.markdown(displayed + "▌")
             placeholder.markdown(displayed)
-
-            # Copy button
-            # Copy button with JavaScript
-        st.code(bot_reply, language=None)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
         # Save
