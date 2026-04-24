@@ -665,7 +665,16 @@ else:
             placeholder.markdown(displayed)
 
             # Copy button
-            st.button("📋 Copy", key=f"copy_{len(st.session_state.messages)}")
+            # Copy button with JavaScript
+        st.markdown(f"""
+            <button onclick="navigator.clipboard.writeText(`{bot_reply.replace('`', '')}`)
+            .then(() => this.innerText = '✅ Copied!')
+            .catch(() => this.innerText = '❌ Failed')" 
+            style="background:rgba(79,124,255,0.2); color:#e8eef5; border:1px solid rgba(79,124,255,0.4); 
+            border-radius:8px; padding:5px 12px; cursor:pointer; font-size:0.8em; margin-top:5px;">
+            📋 Copy
+            </button>
+        """, unsafe_allow_html=True)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
         # Save
