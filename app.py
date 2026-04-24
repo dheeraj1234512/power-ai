@@ -26,100 +26,24 @@ USERS_SHEET_NAME = "Users"
 
 st.set_page_config(page_title="Power AI", page_icon="⚡", layout="wide")
 
-# ===== SESSION STATE INITIALIZATION =====
-def init_session_state():
-    defaults = {
-        "logged_in": False,
-        "username": "",
-        "is_guest": False,
-        "messages": [],
-        "store": {},
-        "current_chat_id": datetime.now().strftime(TIMESTAMP_ID),
-        "all_chats": {},
-        "active_tab": "login",
-        "reg_success": False,
-        "dark_mode": True,
-    }
-    for key, value in defaults.items():
-        if key not in st.session_state:
-            st.session_state[key] = value
+# Dark/Light mode colors
+if st.session_state.dark_mode:
+    bg = "#0b0f14"
+    panel = "#111823"
+    text = "#e8eef5"
+    muted = "#93a4b5"
+    soft = "rgba(255,255,255,0.04)"
+    border = "rgba(255,255,255,0.08)"
+else:
+    bg = "#ffffff"
+    panel = "#f0f2f5"
+    text = "#1a1a1a"
+    muted = "#666666"
+    soft = "rgba(0,0,0,0.04)"
+    border = "rgba(0,0,0,0.1)"
 
-init_session_state()
-
-# ===== HELPER FUNCTIONS =====
-def get_timestamp_id():
-    return datetime.now().strftime(TIMESTAMP_ID)
-
-def get_timestamp_datetime():
-    return datetime.now().strftime(TIMESTAMP_DATETIME)
-
-def get_timestamp_display():
-    return datetime.now().strftime(TIMESTAMP_DISPLAY)
-
-def handle_api_error(error: Exception) -> str:
-    error_str = str(error).lower()
-    if "rate_limit" in error_str or "429" in error_str:
-        return "⚡ Server is busy! Please try again in a few minutes 🙏"
-    return "Error processing request. Please try again."
-
-def hash_password(password, salt=None):
-    """Hash password with salt. If salt is None, generate a new one."""
-    if salt is None:
-        salt = secrets.token_hex(16)
-    hashed = hashlib.sha256((salt + password).encode()).hexdigest()
-    return f"{salt}${hashed}"
-
-def verify_password(stored_hash, password):
-    """Verify password against stored hash."""
-    try:
-        salt, hashed = stored_hash.split("$")
-        return hash_password(password, salt) == stored_hash
-    except ValueError:
-        # Fallback for old unsalted hashes
-        return hashlib.sha256(password.encode()).hexdigest() == stored_hash
-
-def reset_chat_state():
-    """Reset chat messages and store."""
-    st.session_state.messages = []
-    st.session_state.store = {}
-
-def reset_all_state():
-    """Reset all chat state including history."""
-    st.session_state.messages = []
-    st.session_state.all_chats = {}
-    st.session_state.store = {}
-
-# ===== THEME & CSS =====
-def get_theme_colors():
-    if st.session_state.dark_mode:
-        return {
-            "bg": "#0b0f14",
-            "panel": "#111823",
-            "text": "#e8eef5",
-            "muted": "#93a4b5",
-            "soft": "rgba(255,255,255,0.04)",
-            "border": "rgba(255,255,255,0.08)",
-        }
-    return {
-        "bg": "#ffffff",
-        "panel": "#f0f2f5",
-        "text": "#1a1a1a",
-        "muted": "#666666",
-        "soft": "rgba(0,0,0,0.04)",
-        "border": "rgba(0,0,0,0.1)",
-    }
-
-@st.cache_data
-def get_css_styles(dark_mode=True):
-    theme = get_theme_colors()
-    bg = theme["bg"]
-    panel = theme["panel"]
-    text = theme["text"]
-    muted = theme["muted"]
-    soft = theme["soft"]
-    border = theme["border"]
-
-    return f"""
+st.markdown("""
+<style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
 :root {{
@@ -133,112 +57,207 @@ def get_css_styles(dark_mode=True):
     --radius: 14px;
 }}
 
-.stApp {{
+/* ===== GLOBAL ===== */
+.stApp {
     background: var(--bg);
     font-family: 'Inter', sans-serif;
     color: var(--text);
-}}
+}
 
-header[data-testid="stHeader"] {{
+/* ===== HEADER (SAFE - DOES NOT BREAK TOGGLE) ===== */
+header[data-testid="stHeader"] {
     background: transparent !important;
     border: none !important;
-}}
+}
 
-div[data-testid="stDecoration"] {{
+/* hide only decoration */
+div[data-testid="stDecoration"] {
     display: none !important;
-}}
+}
 
-[data-testid="stSidebar"] {{
+/* ===== SIDEBAR ===== */
+[data-testid="stSidebar"] {
     background: var(--panel);
     border-right: 1px solid var(--border);
-}}
+}
 
-[data-testid="stSidebar"] * {{
+/* sidebar text */
+[data-testid="stSidebar"] * {
     color: var(--text);
-}}
+}
 
-.chat-item {{
+/* ===== CHAT LIST ===== */
+.chat-item {
     padding: 10px 12px;
     border-radius: var(--radius);
     border: 1px solid transparent;
     color: var(--muted);
     transition: 0.2s ease;
     cursor: pointer;
-}}
+}
 
-.chat-item:hover {{
+.chat-item:hover {
     background: var(--soft);
     border-color: var(--border);
     color: var(--text);
-}}
+}
 
-.chat-item-active {{
+.chat-item-active {
     background: rgba(79,124,255,0.12);
     border-color: rgba(79,124,255,0.35);
     color: var(--text);
-}}
+}
 
-.main-header {{
+/* ===== TITLE ===== */
+.main-header {
     text-align: center;
     padding: 20px 10px;
-}}
+}
 
-.main-header h1 {{
+.main-header h1 {
     font-size: 2rem;
     font-weight: 600;
     color: var(--text);
     letter-spacing: -0.5px;
-}}
+}
 
-.main-header p {{
+.main-header p {
     color: var(--muted);
     font-size: 0.85rem;
-}}
+}
 
-.stTextInput input, .stChatInput textarea {{
+/* ===== INPUTS ===== */
+.stTextInput input,
+.stChatInput textarea {
     background: var(--panel);
+
     border-radius: var(--radius);
     color: var(--text);
     padding: 10px 12px;
-}}
+}
 
-.stTextInput input:focus, .stChatInput textarea:focus {{
+.stTextInput input:focus,
+.stChatInput textarea:focus {
     border-color: var(--accent);
     box-shadow: none !important;
     outline: none !important;
-}}
+}
 
-::placeholder {{
+/* placeholder */
+::placeholder {
     color: rgba(147,164,181,0.7) !important;
-}}
+}
 
-.stChatMessage {{
+/* ===== CHAT BUBBLES ===== */
+.stChatMessage {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin: 8px 0;
+}
+
+.stChatMessage[data-testid="stChatMessageUser"] {
+    background: rgba(255,255,255,0.03);
+}
+
+.stChatMessage[data-testid="stChatMessageAssistant"] {
+    background: var(--panel);
+}
+
+/* text */
+.stChatMessage p {
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+/* ===== BUTTONS ===== */
+.stButton button {
+    background: var(--accent);
+    color: white;
+    border-radius: 10px;
+    border: none;
+    font-weight: 500;
+    transition: 0.2s ease;
+}
+
+.stButton button:hover {
+    opacity: 0.9;
+}
+
+/* ===== CHAT INPUT BUTTON ===== */
+.stChatInput button {
+    background: var(--accent) !important;
+    border-radius: 10px;
+}
+
+/* ===== TABS ===== */
+.stTabs [data-baseweb="tab"] {
+    color: var(--muted);
+}
+
+.stTabs [aria-selected="true"] {
+    color: var(--text);
+    border-bottom: none !important;
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+}
+
+/* ===== MOBILE RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .main-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .stChatMessage {
+        padding: 10px;
+    }
+
+    .stTextInput input,
+    .stChatInput textarea {
+        font-size: 0.95rem;
+    }
+}
+
+/* ===== CLEANUP ===== */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+            .stChatMessage {
     border: none !important;
     padding: 0 !important;
     margin: 8px 0 !important;
     background: transparent !important;
-}}
+}
 
-.stChatMessage[data-testid="stChatMessageUser"] {{
+/* USER MESSAGE (RIGHT SIDE) */
+.stChatMessage[data-testid="stChatMessageUser"] {
     display: flex;
     justify-content: flex-end;
-}}
+}
 
-.stChatMessage[data-testid="stChatMessageUser"] > div {{
+.stChatMessage[data-testid="stChatMessageUser"] > div {
     background: #1f2a37;
     color: #ffffff;
     padding: 10px 14px;
     border-radius: 18px 18px 4px 18px;
     max-width: 80%;
     font-size: 0.95rem;
-}}
+}
 
-.stChatMessage[data-testid="stChatMessageAssistant"] {{
+/* ASSISTANT MESSAGE (LEFT SIDE) */
+.stChatMessage[data-testid="stChatMessageAssistant"] {
     display: flex;
     justify-content: flex-start;
-}}
+}
 
-.stChatMessage[data-testid="stChatMessageAssistant"] > div {{
+.stChatMessage[data-testid="stChatMessageAssistant"] > div {
     background: #111823;
     color: #e8eef5;
     padding: 10px 14px;
@@ -246,61 +265,57 @@ div[data-testid="stDecoration"] {{
     max-width: 80%;
     font-size: 0.95rem;
     border: 1px solid rgba(255,255,255,0.06);
-}}
+}
 
-.stButton button {{
-    background: var(--accent);
-    color: white;
-    border-radius: 10px;
-    border: none;
-    font-weight: 500;
-    transition: 0.2s ease;
-}}
-
-.stButton button:hover {{
-    opacity: 0.9;
-}}
-
-.stTabs [data-baseweb="tab"] {{
-    color: var(--muted);
-}}
-
-.stTabs [aria-selected="true"] {{
-    color: var(--text);
-    border-bottom: none !important;
-}}
-
-::-webkit-scrollbar {{
-    width: 6px;
-}}
-
-::-webkit-scrollbar-thumb {{
-    background: rgba(255,255,255,0.15);
-    border-radius: 10px;
-}}
-
-#MainMenu {{ visibility: hidden; }}
-footer {{ visibility: hidden; }}
-
-@media (max-width: 768px) {{
-    .main-header h1 {{ font-size: 1.5rem; }}
-    .stChatMessage {{ padding: 10px; }}
+/* MOBILE OPTIMIZATION */
+@media (max-width: 768px) {
     .stChatMessage[data-testid="stChatMessageUser"] > div,
-    .stChatMessage[data-testid="stChatMessageAssistant"] > div {{
+    .stChatMessage[data-testid="stChatMessageAssistant"] > div {
         max-width: 92%;
         font-size: 0.9rem;
-    }}
-}}
-"""
+    }
+}
+            [data-testid="stSidebar"] {
+    background: #0f141b !important;
+    border-right: 1px solid rgba(255,255,255,0.06);
+}
 
-st.markdown(f"<style>{get_css_styles(st.session_state.dark_mode)}</style>", unsafe_allow_html=True)
+/* sidebar items */
+.chat-item {
+    padding: 10px 12px;
+    border-radius: 10px;
+    transition: 0.2s ease;
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+.chat-item:hover {
+    background: rgba(255,255,255,0.04);
+    color: #ffffff;
+}
+
+/* active chat */
+.chat-item-active {
+    background: rgba(79,124,255,0.12);
+    color: #ffffff;
+    border-left: 2px solid #4f7cff;
+}
+
+/* sidebar title */
+.sidebar-header h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+}            
+</style>
+""", unsafe_allow_html=True)
 
 # ===== GOOGLE SHEETS =====
-@st.cache_resource
 def get_sheets():
     try:
         creds = Credentials.from_service_account_info(
-            st.secrets[GCP_SECRET_KEY],
+            st.secrets["gcp_service_account"],
             scopes=[
                 "https://www.googleapis.com/auth/spreadsheets",
                 "https://www.googleapis.com/auth/drive"
@@ -308,76 +323,73 @@ def get_sheets():
         )
         client = gspread.authorize(creds)
         workbook = client.open_by_key(SHEET_ID)
-        return workbook.sheet1, workbook.worksheet(USERS_SHEET_NAME)
+        chat_sheet = workbook.sheet1
+        users_sheet = workbook.worksheet("Users")
+        return chat_sheet, users_sheet
     except Exception as e:
-        st.error(handle_api_error(e))
+        if "rate_limit" in str(e).lower() or "429" in str(e):
+            bot_reply = "⚡ Just Wait 🙏"
+        else:
+            bot_reply = f"Somthing Error!"
         return None, None
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
 
 def register_user(username, password):
     _, users_sheet = get_sheets()
     if users_sheet:
-        try:
-            users = users_sheet.get_all_records()
-            for user in users:
-                if user.get("Username") == username:
-                    return False, "Username already exists!"
-            users_sheet.append_row([
-                username,
-                hash_password(password),
-                get_timestamp_datetime()
-            ])
-            return True, "Registration successful!"
-        except Exception as e:
-            return False, handle_api_error(e)
+        users = users_sheet.get_all_records()
+        for user in users:
+            if user["Username"] == username:
+                return False, "Username already exists!"
+        users_sheet.append_row([username, hash_password(password), datetime.now().strftime("%Y-%m-%d %H:%M:%S")])
+        return True, "Registration successful!"
     return False, "Database error!"
 
 def login_user(username, password):
     _, users_sheet = get_sheets()
     if users_sheet:
-        try:
-            users = users_sheet.get_all_records()
-            for user in users:
-                if user.get("Username") == username and verify_password(user.get("Password", ""), password):
-                    return True
-        except Exception as e:
-            st.error(handle_api_error(e))
+        users = users_sheet.get_all_records()
+        hashed = hash_password(password)
+        for user in users:
+            if user["Username"] == username and user["Password"] == hashed:
+                return True
     return False
 
 def save_chat(username, question, answer, chat_id):
     chat_sheet, _ = get_sheets()
     if chat_sheet:
-        try:
-            chat_sheet.append_row([
-                get_timestamp_datetime(),
-                question,
-                answer,
-                username,
-                chat_id
-            ])
-        except Exception as e:
-            st.error(handle_api_error(e))
+        chat_sheet.append_row([datetime.now().strftime("%Y-%m-%d %H:%M:%S"), question, answer, username, chat_id])
 
 def get_user_history(username):
     chat_sheet, _ = get_sheets()
     if chat_sheet:
-        try:
-            data = chat_sheet.get_all_records()
-            return [row for row in data if row.get("Username") == username]
-        except Exception as e:
-            st.error(handle_api_error(e))
+        data = chat_sheet.get_all_records()
+        return [row for row in data if row["Session ID"] == username]
     return []
 
-def load_user_chat_history(username: str):
-    """Load and structure user's chat history."""
-    history = get_user_history(username)
-    chats = {}
-    for row in history:
-        cid = row.get("Session ID") or row.get("Chat ID") or "default"
-        if cid not in chats:
-            chats[cid] = []
-        chats[cid].append({"role": "user", "content": row.get("User Question", "")})
-        chats[cid].append({"role": "assistant", "content": row.get("Bot Answer", "")})
-    return chats
+# ===== SESSION STATE =====
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "username" not in st.session_state:
+    st.session_state.username = ""
+if "is_guest" not in st.session_state:
+    st.session_state.is_guest = False
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+if "store" not in st.session_state:
+    st.session_state.store = {}
+if "current_chat_id" not in st.session_state:
+    st.session_state.current_chat_id = datetime.now().strftime("%Y%m%d%H%M%S")
+if "all_chats" not in st.session_state:
+    st.session_state.all_chats = {}
+if "active_tab" not in st.session_state:
+    st.session_state.active_tab = "login"
+if "reg_success" not in st.session_state:
+    st.session_state.reg_success = False
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = True
 
 # ===== LOGIN PAGE =====
 if not st.session_state.logged_in:
@@ -407,9 +419,22 @@ if not st.session_state.logged_in:
                         st.session_state.username = username
                         st.session_state.is_guest = False
                         st.session_state.reg_success = False
-                        reset_all_state()
-                        st.session_state.all_chats = load_user_chat_history(username)
-                        st.session_state.current_chat_id = get_timestamp_id()
+                        st.session_state.messages = []
+                        st.session_state.all_chats = {}
+
+                        # load history
+                        history = get_user_history(username)
+                        for row in history:
+                            cid = row.get("Chat ID", "default")
+                            if cid not in st.session_state.all_chats:
+                                st.session_state.all_chats[cid] = []
+                            st.session_state.all_chats[cid].append({"role": "user", "content": row["User Question"]})
+                            st.session_state.all_chats[cid].append({"role": "assistant", "content": row["Bot Answer"]})
+
+                        # New Chat
+                        new_id = datetime.now().strftime("%Y%m%d%H%M%S")
+                        st.session_state.current_chat_id = new_id
+                        st.session_state.messages = []
                         st.rerun()
                     else:
                         st.error("❌ Wrong username or password!")
@@ -442,8 +467,8 @@ if not st.session_state.logged_in:
                 st.session_state.logged_in = True
                 st.session_state.username = "Guest"
                 st.session_state.is_guest = True
-                reset_all_state()
-                st.session_state.current_chat_id = get_timestamp_id()
+                st.session_state.messages = []
+                st.session_state.current_chat_id = datetime.now().strftime("%Y%m%d%H%M%S")
                 st.rerun()
 
 # ===== CHAT PAGE =====
@@ -458,10 +483,12 @@ else:
 
         # New Chat button
         if st.button("➕ New Chat", use_container_width=True):
+            new_id = datetime.now().strftime("%Y%m%d%H%M%S")
             if st.session_state.messages:
                 st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
-            st.session_state.current_chat_id = get_timestamp_id()
-            reset_chat_state()
+            st.session_state.current_chat_id = new_id
+            st.session_state.messages = []
+            st.session_state.store = {}
             st.rerun()
 
         st.divider()
@@ -471,6 +498,7 @@ else:
             st.markdown("**💬 Old Chats:**")
             for chat_id, chat_msgs in reversed(list(st.session_state.all_chats.items())):
                 if chat_msgs:
+                    # Show Question snippet as title
                     first_q = chat_msgs[0]["content"][:30] + "..." if len(chat_msgs[0]["content"]) > 30 else chat_msgs[0]["content"]
                     is_active = chat_id == st.session_state.current_chat_id
                     css_class = "chat-item chat-item-active" if is_active else "chat-item"
@@ -485,28 +513,27 @@ else:
 
         st.divider()
 
-        # User info and theme toggle
+        # User info aur logout
         if st.session_state.is_guest:
             st.markdown("👤 **Guest Mode**")
         else:
             st.markdown(f"👤 **{st.session_state.username}**")
-
+        # Dark/Light toggle
         if st.session_state.dark_mode:
             if st.button("☀️ Light Mode", use_container_width=True):
                 st.session_state.dark_mode = False
-                st.cache_data.clear()
                 st.rerun()
         else:
             if st.button("🌙 Dark Mode", use_container_width=True):
                 st.session_state.dark_mode = True
-                st.cache_data.clear()
                 st.rerun()
-
         if st.button("🚪 Logout", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.username = ""
             st.session_state.is_guest = False
-            reset_all_state()
+            st.session_state.messages = []
+            st.session_state.store = {}
+            st.session_state.all_chats = {}
             st.session_state.reg_success = False
             st.rerun()
 
@@ -520,11 +547,19 @@ else:
     st.divider()
 
     # AI Setup
-    @st.cache_resource
-    def init_chatbot():
-        llm = ChatGroq(model=MODEL_NAME, temperature=TEMPERATURE)
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", f"""
+
+    tools = [
+        {
+            "type": "web_search_20250305",
+            "name": "web_search"
+        }
+    ]
+    llm = ChatGroq(
+    model="llama-3.3-70b-versatile",
+    temperature=0.2
+)
+    prompt = ChatPromptTemplate.from_messages([
+    ("system", f"""
     You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.
 
     ═══════════════════════════════════
@@ -538,51 +573,95 @@ else:
     ═══════════════════════════════════
     📅 CONTEXT
     ═══════════════════════════════════
-    - Current Date: {get_timestamp_display()}
+    - Current Date: {datetime.now().strftime("%B %d, %Y")}
     - User Name: {st.session_state.username}
 
     ═══════════════════════════════════
     🌐 LANGUAGE INTELLIGENCE (STRICT RULE)
     ═══════════════════════════════════
     - ALWAYS match user's language style:
-    • English → English
-    • Hindi → Hindi
+    • English → English  
+    • Hindi → Hindi  
     • Hinglish → Hinglish (natural, not forced)
     - Never switch language unless user does.
+
+    ═══════════════════════════════════
+    🔎 WEB SEARCH DECISION SYSTEM
+    ═══════════════════════════════════
+    You MUST use web search when:
+    - Query involves **latest updates (2026+)**
+    - Topics like:
+    • New tech (iPhone 17, AI tools, gadgets)
+    • Current prices, specs, comparisons
+    • News, trends, live data
+    • Company updates or recent releases
+
+    DO NOT search when:
+    - Basic concepts (e.g., "What is Apex?")
+    - Stable knowledge (math, theory, definitions)
+
+    After searching:
+    - Extract only **relevant, accurate insights**
+    - Summarize in a **clean and structured format**
+    - Avoid raw dumps or unnecessary details
 
     ═══════════════════════════════════
     ⚡ RESPONSE STYLE (VERY IMPORTANT)
     ═══════════════════════════════════
     - Start with a **clear answer**, then expand if needed
-    - Use bullet points for clarity
-    - Keep tone smart, helpful, slightly conversational
+    - Use:
+    • Bullet points for clarity
+    • Headings for structure
+    • Examples when helpful
+    - Keep tone:
+    → Smart
+    → Helpful
+    → Slightly conversational (not robotic)
+
+    ═══════════════════════════════════
+    🚀 INTELLIGENCE BOOST MODE
+    ═══════════════════════════════════
+    When user asks for:
+    - Projects → Give real-world + step-by-step + pro tips
+    - Comparisons → Give clear winner + reasoning
+    - Learning → Break into simple + advanced path
+    - Debugging → Identify issue + fix + explain why
+
+    ═══════════════════════════════════
+    ⚠️ STRICT DON'Ts
+    ═══════════════════════════════════
+    - Do NOT hallucinate facts
+    - Do NOT guess outdated info → search instead
+    - Do NOT give generic ChatGPT-style answers
+    - Do NOT over-explain simple things
 
     ═══════════════════════════════════
     🎯 GOAL
     ═══════════════════════════════════
-    Give answers that feel like expert guidance, not just information.
+    Give answers that feel like:
+    → Expert guidance
+    → Not just information
+
     Always aim: **"User ko real value mile — not just response"**
     """),
 
-            MessagesPlaceholder(variable_name="history"),
-            ("human", "{input}")
-        ])
-        chain = prompt | llm
+        MessagesPlaceholder(variable_name="history"),
+        ("human", "{input}")
+    ])
+    chain = prompt | llm
 
-        def get_session_history(session_id: str):
-            if session_id not in st.session_state.store:
-                st.session_state.store[session_id] = ChatMessageHistory()
-            return st.session_state.store[session_id]
+    def get_session_history(session_id: str):
+        if session_id not in st.session_state.store:
+            st.session_state.store[session_id] = ChatMessageHistory()
+        return st.session_state.store[session_id]
 
-        return RunnableWithMessageHistory(
-            chain, get_session_history,
-            input_messages_key="input",
-            history_messages_key="history"
-        )
+    chatbot = RunnableWithMessageHistory(
+        chain, get_session_history,
+        input_messages_key="input",
+        history_messages_key="history"
+    )
 
-    chatbot = init_chatbot()
-
-    # Show Messages
+    # Show Message
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
             st.write(msg["content"])
@@ -603,10 +682,18 @@ else:
                 )
                 bot_reply = response.content
             except Exception as e:
-                bot_reply = handle_api_error(e)
-
+                if "rate_limit" in str(e).lower() or "429" in str(e):
+                    bot_reply = "⚡ Server is busy! Please try again in a few minutes 🙏"
+                else:
+                    bot_reply = "Some error occurred!"
         with st.chat_message("assistant"):
-            st.write(bot_reply)
+            # Typing animation
+            placeholder = st.empty()
+            displayed = ""
+            for char in bot_reply:
+                displayed += char
+                placeholder.markdown(displayed + "▌")
+            placeholder.markdown(displayed)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
         # Save
