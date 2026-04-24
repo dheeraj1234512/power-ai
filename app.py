@@ -19,24 +19,36 @@ SHEET_ID = "1KZ4bnjGkOAjCy_vto-ESkcyl7LessM4IQmfMlSICFC0"
 
 st.set_page_config(page_title="Power AI", page_icon="⚡", layout="wide")
 
+# Dark/Light mode colors
+if st.session_state.dark_mode:
+    bg = "#0b0f14"
+    panel = "#111823"
+    text = "#e8eef5"
+    muted = "#93a4b5"
+    soft = "rgba(255,255,255,0.04)"
+    border = "rgba(255,255,255,0.08)"
+else:
+    bg = "#ffffff"
+    panel = "#f0f2f5"
+    text = "#1a1a1a"
+    muted = "#666666"
+    soft = "rgba(0,0,0,0.04)"
+    border = "rgba(0,0,0,0.1)"
+
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
-:root {
-     
-    --bg: #0b0f14;
-    --panel: #111823;
-    --soft: rgba(255,255,255,0.04);
-    --border: rgba(255,255,255,0.08);
-
-    --text: #e8eef5;
-    --muted: #93a4b5;
-
+:root {{
+    --bg: {bg};
+    --panel: {panel};
+    --soft: {soft};
+    --border: {border};
+    --text: {text};
+    --muted: {muted};
     --accent: #4f7cff;
-
     --radius: 14px;
-}
+}}
 
 /* ===== GLOBAL ===== */
 .stApp {
