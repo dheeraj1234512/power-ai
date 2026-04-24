@@ -1,6 +1,7 @@
 import streamlit as st
 import os
 import gspread
+import streamlit.components.v1 as components
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import hashlib
@@ -666,15 +667,13 @@ else:
 
             # Copy button
             # Copy button with JavaScript
-        st.markdown(f"""
-            <button onclick="navigator.clipboard.writeText(`{bot_reply.replace('`', '')}`)
-            .then(() => this.innerText = '✅ Copied!')
-            .catch(() => this.innerText = '❌ Failed')" 
-            style="background:rgba(79,124,255,0.2); color:#e8eef5; border:1px solid rgba(79,124,255,0.4); 
-            border-radius:8px; padding:5px 12px; cursor:pointer; font-size:0.8em; margin-top:5px;">
-            📋 Copy
-            </button>
-        """, unsafe_allow_html=True)
+
+        components.html(f"""
+        <button onclick="navigator.clipboard.writeText({repr(bot_reply)}).then(()=>{{this.innerText='✅ Copied!';setTimeout(()=>this.innerText='📋 Copy',2000)}}).catch(()=>this.innerText='❌ Failed')"
+        style="background:rgba(79,124,255,0.2);color:#e8eef5;border:1px solid rgba(79,124,255,0.4);border-radius:8px;padding:5px 12px;cursor:pointer;font-size:0.8em;margin-top:5px;">
+        📋 Copy
+        </button>
+        """, height=40)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
         # Save
