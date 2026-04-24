@@ -19,275 +19,217 @@ SHEET_ID = "1KZ4bnjGkOAjCy_vto-ESkcyl7LessM4IQmfMlSICFC0"
 
 st.set_page_config(page_title="Power AI", page_icon="⚡", layout="wide")
 
-st.markdown("""
+# Dark/Light mode colors
+if st.session_state.dark_mode:
+    bg = "#0b0f14"
+    panel = "#111823"
+    text = "#e8eef5"
+    muted = "#93a4b5"
+    soft = "rgba(255,255,255,0.04)"
+    border = "rgba(255,255,255,0.08)"
+else:
+    bg = "#ffffff"
+    panel = "#f0f2f5"
+    text = "#1a1a1a"
+    muted = "#666666"
+    soft = "rgba(0,0,0,0.04)"
+    border = "rgba(0,0,0,0.1)"
+
+st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
-:root {
-    --bg: #0b0f14;
-    --panel: #111823;
-    --soft: rgba(255,255,255,0.04);
-    --border: rgba(255,255,255,0.08);
-
-    --text: #e8eef5;
-    --muted: #93a4b5;
-
+:root {{
+    --bg: {bg};
+    --panel: {panel};
+    --soft: {soft};
+    --border: {border};
+    --text: {text};
+    --muted: {muted};
     --accent: #4f7cff;
-
     --radius: 14px;
-}
+}}
 
-/* ===== GLOBAL ===== */
-.stApp {
+.stApp {{
     background: var(--bg);
     font-family: 'Inter', sans-serif;
     color: var(--text);
-}
+}}
 
-/* ===== HEADER (SAFE - DOES NOT BREAK TOGGLE) ===== */
-header[data-testid="stHeader"] {
+header[data-testid="stHeader"] {{
     background: transparent !important;
     border: none !important;
-}
+}}
 
-/* hide only decoration */
-div[data-testid="stDecoration"] {
+div[data-testid="stDecoration"] {{
     display: none !important;
-}
+}}
 
-/* ===== SIDEBAR ===== */
-[data-testid="stSidebar"] {
-    background: var(--panel);
+[data-testid="stSidebar"] {{
+    background: var(--panel) !important;
     border-right: 1px solid var(--border);
-}
+}}
 
-/* sidebar text */
-[data-testid="stSidebar"] * {
+[data-testid="stSidebar"] * {{
+    color: var(--text) !important;
+}}
+
+.sidebar-header h2 {{
+    font-size: 1rem;
+    font-weight: 600;
     color: var(--text);
-}
+    letter-spacing: 0.5px;
+}}
 
-/* ===== CHAT LIST ===== */
-.chat-item {
+.chat-item {{
     padding: 10px 12px;
-    border-radius: var(--radius);
+    border-radius: 10px;
     border: 1px solid transparent;
     color: var(--muted);
     transition: 0.2s ease;
     cursor: pointer;
-}
+    font-size: 0.9rem;
+}}
 
-.chat-item:hover {
+.chat-item:hover {{
     background: var(--soft);
     border-color: var(--border);
     color: var(--text);
-}
+}}
 
-.chat-item-active {
+.chat-item-active {{
     background: rgba(79,124,255,0.12);
-    border-color: rgba(79,124,255,0.35);
+    border-left: 2px solid #4f7cff;
     color: var(--text);
-}
+}}
 
-/* ===== TITLE ===== */
-.main-header {
+.main-header {{
     text-align: center;
     padding: 20px 10px;
-}
+}}
 
-.main-header h1 {
+.main-header h1 {{
     font-size: 2rem;
     font-weight: 600;
     color: var(--text);
     letter-spacing: -0.5px;
-}
+}}
 
-.main-header p {
+.main-header p {{
     color: var(--muted);
     font-size: 0.85rem;
-}
+}}
 
-/* ===== INPUTS ===== */
 .stTextInput input,
-.stChatInput textarea {
-    background: var(--panel);
-
-    border-radius: var(--radius);
-    color: var(--text);
-    padding: 10px 12px;
-}
+.stChatInput textarea {{
+    background: var(--panel) !important;
+    border-radius: var(--radius) !important;
+    color: var(--text) !important;
+    padding: 10px 12px !important;
+    border: 1px solid var(--border) !important;
+}}
 
 .stTextInput input:focus,
-.stChatInput textarea:focus {
-    border-color: var(--accent);
+.stChatInput textarea:focus {{
+    border-color: var(--accent) !important;
     box-shadow: none !important;
     outline: none !important;
-}
+}}
 
-/* placeholder */
-::placeholder {
-    color: rgba(147,164,181,0.7) !important;
-}
+::placeholder {{
+    color: var(--muted) !important;
+}}
 
-/* ===== CHAT BUBBLES ===== */
-.stChatMessage {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px;
-    margin: 8px 0;
-}
+.stTextInput label {{
+    color: var(--muted) !important;
+}}
 
-.stChatMessage[data-testid="stChatMessageUser"] {
-    background: rgba(255,255,255,0.03);
-}
-
-.stChatMessage[data-testid="stChatMessageAssistant"] {
-    background: var(--panel);
-}
-
-/* text */
-.stChatMessage p {
-    color: var(--text);
-    line-height: 1.6;
-    font-size: 0.95rem;
-}
-
-/* ===== BUTTONS ===== */
-.stButton button {
-    background: var(--accent);
-    color: white;
-    border-radius: 10px;
-    border: none;
-    font-weight: 500;
-    transition: 0.2s ease;
-}
-
-.stButton button:hover {
-    opacity: 0.9;
-}
-
-/* ===== CHAT INPUT BUTTON ===== */
-.stChatInput button {
-    background: var(--accent) !important;
-    border-radius: 10px;
-}
-
-/* ===== TABS ===== */
-.stTabs [data-baseweb="tab"] {
-    color: var(--muted);
-}
-
-.stTabs [aria-selected="true"] {
-    color: var(--text);
-    border-bottom: none !important;
-
-/* ===== SCROLLBAR ===== */
-::-webkit-scrollbar {
-    width: 6px;
-}
-
-::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.15);
-    border-radius: 10px;
-}
-
-/* ===== MOBILE RESPONSIVE ===== */
-@media (max-width: 768px) {
-    .main-header h1 {
-        font-size: 1.5rem;
-    }
-
-    .stChatMessage {
-        padding: 10px;
-    }
-
-    .stTextInput input,
-    .stChatInput textarea {
-        font-size: 0.95rem;
-    }
-}
-
-/* ===== CLEANUP ===== */
-#MainMenu {visibility: hidden;}
-footer {visibility: hidden;}
-            .stChatMessage {
+.stChatMessage {{
     border: none !important;
     padding: 0 !important;
     margin: 8px 0 !important;
     background: transparent !important;
-}
+}}
 
-/* USER MESSAGE (RIGHT SIDE) */
-.stChatMessage[data-testid="stChatMessageUser"] {
+.stChatMessage[data-testid="stChatMessageUser"] {{
     display: flex;
     justify-content: flex-end;
-}
+}}
 
-.stChatMessage[data-testid="stChatMessageUser"] > div {
+.stChatMessage[data-testid="stChatMessageUser"] > div {{
     background: #1f2a37;
     color: #ffffff;
     padding: 10px 14px;
     border-radius: 18px 18px 4px 18px;
     max-width: 80%;
     font-size: 0.95rem;
-}
+}}
 
-/* ASSISTANT MESSAGE (LEFT SIDE) */
-.stChatMessage[data-testid="stChatMessageAssistant"] {
+.stChatMessage[data-testid="stChatMessageAssistant"] {{
     display: flex;
     justify-content: flex-start;
-}
+}}
 
-.stChatMessage[data-testid="stChatMessageAssistant"] > div {
-    background: #111823;
-    color: #e8eef5;
+.stChatMessage[data-testid="stChatMessageAssistant"] > div {{
+    background: var(--panel);
+    color: var(--text);
     padding: 10px 14px;
     border-radius: 18px 18px 18px 4px;
     max-width: 80%;
     font-size: 0.95rem;
-    border: 1px solid rgba(255,255,255,0.06);
-}
+    border: 1px solid var(--border);
+}}
 
-/* MOBILE OPTIMIZATION */
-@media (max-width: 768px) {
+.stChatMessage p {{
+    color: var(--text) !important;
+    line-height: 1.6;
+    font-size: 0.95rem;
+}}
+
+.stButton button {{
+    background: var(--accent) !important;
+    color: white !important;
+    border-radius: 10px !important;
+    border: none !important;
+    font-weight: 500 !important;
+    transition: 0.2s ease !important;
+}}
+
+.stButton button:hover {{
+    opacity: 0.9 !important;
+}}
+
+.stChatInput button {{
+    background: var(--accent) !important;
+    border-radius: 10px !important;
+}}
+
+.stTabs [data-baseweb="tab"] {{
+    color: var(--muted) !important;
+}}
+
+.stTabs [aria-selected="true"] {{
+    color: var(--text) !important;
+    border-bottom: 2px solid var(--accent) !important;
+}}
+
+::-webkit-scrollbar {{ width: 6px; }}
+::-webkit-scrollbar-thumb {{
+    background: rgba(255,255,255,0.15);
+    border-radius: 10px;
+}}
+
+@media (max-width: 768px) {{
+    .main-header h1 {{ font-size: 1.5rem; }}
     .stChatMessage[data-testid="stChatMessageUser"] > div,
-    .stChatMessage[data-testid="stChatMessageAssistant"] > div {
+    .stChatMessage[data-testid="stChatMessageAssistant"] > div {{
         max-width: 92%;
         font-size: 0.9rem;
-    }
-}
-            [data-testid="stSidebar"] {
-    background: #0f141b !important;
-    border-right: 1px solid rgba(255,255,255,0.06);
-}
+    }}
+}}
 
-/* sidebar items */
-.chat-item {
-    padding: 10px 12px;
-    border-radius: 10px;
-    transition: 0.2s ease;
-    color: #94a3b8;
-    font-size: 0.9rem;
-}
-
-.chat-item:hover {
-    background: rgba(255,255,255,0.04);
-    color: #ffffff;
-}
-
-/* active chat */
-.chat-item-active {
-    background: rgba(79,124,255,0.12);
-    color: #ffffff;
-    border-left: 2px solid #4f7cff;
-}
-
-/* sidebar title */
-.sidebar-header h2 {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #ffffff;
-    letter-spacing: 0.5px;
-}            
+#MainMenu {{visibility: hidden;}}
+footer {{visibility: hidden;}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -368,6 +310,8 @@ if "active_tab" not in st.session_state:
     st.session_state.active_tab = "login"
 if "reg_success" not in st.session_state:
     st.session_state.reg_success = False
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = True
 
 # ===== LOGIN PAGE =====
 if not st.session_state.logged_in:
@@ -496,7 +440,15 @@ else:
             st.markdown("👤 **Guest Mode**")
         else:
             st.markdown(f"👤 **{st.session_state.username}**")
-
+        # Dark/Light toggle
+        if st.session_state.dark_mode:
+            if st.button("☀️ Light Mode", use_container_width=True):
+                st.session_state.dark_mode = False
+                st.rerun()
+        else:
+            if st.button("🌙 Dark Mode", use_container_width=True):
+                st.session_state.dark_mode = True
+                st.rerun()
         if st.button("🚪 Logout", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.username = ""
