@@ -620,11 +620,19 @@ else:
         assistant_border = "#e0e0e0"
 
     for msg in st.session_state.messages:
+        # Escape HTML special characters
+        content = (msg['content']
+                  .replace('&', '&amp;')
+                  .replace('<', '&lt;')
+                  .replace('>', '&gt;')
+                  .replace('"', '&quot;')
+                  .replace("'", '&#39;'))
+
         if msg["role"] == "user":
             st.markdown(f"""
             <div style="display: flex; justify-content: flex-end; margin: 8px 0;">
                 <div style="background: {user_bg}; color: {user_text}; padding: 10px 14px; border-radius: 18px 18px 4px 18px; max-width: 80%; word-wrap: break-word; font-family: Inter, sans-serif; font-size: 0.95rem;">
-                    {msg['content']}
+                    {content}
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -632,7 +640,7 @@ else:
             st.markdown(f"""
             <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
                 <div style="background: {assistant_bg}; color: {assistant_text}; padding: 10px 14px; border-radius: 18px 18px 18px 4px; max-width: 80%; word-wrap: break-word; border: 1px solid {assistant_border}; font-family: Inter, sans-serif; font-size: 0.95rem;">
-                    {msg['content']}
+                    {content}
                 </div>
             </div>
             """, unsafe_allow_html=True)
