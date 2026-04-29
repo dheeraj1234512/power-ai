@@ -609,10 +609,33 @@ else:
 
     chatbot = init_chatbot()
 
-    # Show Messages
+    # Show Messages - Theme aware colors
+    if st.session_state.dark_mode:
+        user_bg, user_text = "#4f7cff", "#ffffff"
+        assistant_bg, assistant_text = "#2d2d2d", "#e8eef5"
+        assistant_border = "#404040"
+    else:
+        user_bg, user_text = "#4f7cff", "#ffffff"
+        assistant_bg, assistant_text = "#f0f2f5", "#1a1a1a"
+        assistant_border = "#e0e0e0"
+
     for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.write(msg["content"])
+        if msg["role"] == "user":
+            st.markdown(f"""
+            <div style="display: flex; justify-content: flex-end; margin: 8px 0;">
+                <div style="background: {user_bg}; color: {user_text}; padding: 10px 14px; border-radius: 18px 18px 4px 18px; max-width: 80%; word-wrap: break-word; font-family: Inter, sans-serif; font-size: 0.95rem;">
+                    {msg['content']}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
+                <div style="background: {assistant_bg}; color: {assistant_text}; padding: 10px 14px; border-radius: 18px 18px 18px 4px; max-width: 80%; word-wrap: break-word; border: 1px solid {assistant_border}; font-family: Inter, sans-serif; font-size: 0.95rem;">
+                    {msg['content']}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
     # Input
     user_input = st.chat_input("⚡ Ask Anything To Power AI...")
