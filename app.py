@@ -119,6 +119,20 @@ def get_css_styles(dark_mode=True):
     soft = theme["soft"]
     border = theme["border"]
 
+    # Chat bubble colors based on theme
+    if dark_mode:
+        user_msg_bg = "#1f2a37"
+        user_msg_text = "#ffffff"
+        assistant_msg_bg = "#111823"
+        assistant_msg_text = "#e8eef5"
+        placeholder_color = "rgba(147,164,181,0.7)"
+    else:
+        user_msg_bg = "#4f7cff"
+        user_msg_text = "#ffffff"
+        assistant_msg_bg = "#f0f2f5"
+        assistant_msg_text = "#1a1a1a"
+        placeholder_color = "rgba(100,100,100,0.5)"
+
     return f"""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
@@ -209,7 +223,7 @@ div[data-testid="stDecoration"] {{
 }}
 
 ::placeholder {{
-    color: rgba(147,164,181,0.7) !important;
+    color: {placeholder_color} !important;
 }}
 
 .stChatMessage {{
@@ -225,8 +239,8 @@ div[data-testid="stDecoration"] {{
 }}
 
 .stChatMessage[data-testid="stChatMessageUser"] > div {{
-    background: #1f2a37;
-    color: #ffffff;
+    background: {user_msg_bg};
+    color: {user_msg_text};
     padding: 10px 14px;
     border-radius: 18px 18px 4px 18px;
     max-width: 80%;
@@ -239,13 +253,13 @@ div[data-testid="stDecoration"] {{
 }}
 
 .stChatMessage[data-testid="stChatMessageAssistant"] > div {{
-    background: #111823;
-    color: #e8eef5;
+    background: {assistant_msg_bg};
+    color: {assistant_msg_text};
     padding: 10px 14px;
     border-radius: 18px 18px 18px 4px;
     max-width: 80%;
     font-size: 0.95rem;
-    border: 1px solid rgba(255,255,255,0.06);
+    border: 1px solid var(--border);
 }}
 
 .stButton button {{
