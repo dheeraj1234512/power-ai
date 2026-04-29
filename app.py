@@ -26,7 +26,7 @@ USERS_SHEET_NAME = "Users"
 
 st.set_page_config(page_title="Power AI", page_icon="⚡", layout="wide")
 
-# ===== SESSION STATE =====
+# ===== SESSION STATE INITIALIZATION =====
 def init_session_state():
     defaults = {
         "logged_in": False,
@@ -63,55 +63,74 @@ def handle_api_error(error: Exception) -> str:
     return "Error processing request. Please try again."
 
 def hash_password(password, salt=None):
+    """Hash password with salt. If salt is None, generate a new one."""
     if salt is None:
         salt = secrets.token_hex(16)
     hashed = hashlib.sha256((salt + password).encode()).hexdigest()
     return f"{salt}${hashed}"
 
 def verify_password(stored_hash, password):
+    """Verify password against stored hash."""
     try:
         salt, hashed = stored_hash.split("$")
         return hash_password(password, salt) == stored_hash
     except ValueError:
+        # Fallback for old unsalted hashes
         return hashlib.sha256(password.encode()).hexdigest() == stored_hash
 
 def reset_chat_state():
+    """Reset chat messages and store."""
     st.session_state.messages = []
     st.session_state.store = {}
 
 def reset_all_state():
+    """Reset all chat state including history."""
     st.session_state.messages = []
     st.session_state.all_chats = {}
     st.session_state.store = {}
 
 # ===== THEME & CSS =====
+def get_theme_colors():
+    if st.session_state.dark_mode:
+        return {
+            "bg": "#0b0f14",
+            "panel": "#111823",
+            "text": "#e8eef5",
+            "muted": "#93a4b5",
+            "soft": "rgba(255,255,255,0.04)",
+            "border": "rgba(255,255,255,0.08)",
+        }
+    return {
+        "bg": "#ffffff",
+        "panel": "#f0f2f5",
+        "text": "#1a1a1a",
+        "muted": "#666666",
+        "soft": "rgba(0,0,0,0.04)",
+        "border": "rgba(0,0,0,0.1)",
+    }
+
 def get_css_styles(dark_mode=True):
+    theme = get_theme_colors()
+    bg = theme["bg"]
+    panel = theme["panel"]
+    text = theme["text"]
+    muted = theme["muted"]
+    soft = theme["soft"]
+    border = theme["border"]
+
+    # Chat bubble colors based on theme
     if dark_mode:
-        bg = "#0b0f14"
-        panel = "#111823"
-        text = "#e8eef5"
-        muted = "#93a4b5"
-        soft = "rgba(255,255,255,0.04)"
-        border = "rgba(255,255,255,0.08)"
         user_msg_bg = "#1f2a37"
         user_msg_text = "#ffffff"
         assistant_msg_bg = "#111823"
         assistant_msg_text = "#e8eef5"
         placeholder_color = "rgba(147,164,181,0.7)"
-        scrollbar_color = "rgba(255,255,255,0.15)"
     else:
-        bg = "#ffffff"
-        panel = "#f0f2f5"
-        text = "#1a1a1a"
-        muted = "#666666"
-        soft = "rgba(0,0,0,0.04)"
-        border = "rgba(0,0,0,0.1)"
         user_msg_bg = "#4f7cff"
         user_msg_text = "#ffffff"
         assistant_msg_bg = "#f0f2f5"
         assistant_msg_text = "#1a1a1a"
         placeholder_color = "rgba(100,100,100,0.5)"
-        scrollbar_color = "rgba(0,0,0,0.15)"
 
     return f"""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
@@ -143,30 +162,21 @@ div[data-testid="stDecoration"] {{
 }}
 
 [data-testid="stSidebar"] {{
-    background: var(--panel) !important;
+    background: var(--panel);
     border-right: 1px solid var(--border);
 }}
 
 [data-testid="stSidebar"] * {{
-    color: var(--text) !important;
-}}
-
-.sidebar-header h2 {{
-    font-size: 1rem;
-    font-weight: 600;
     color: var(--text);
-    letter-spacing: 0.5px;
 }}
 
 .chat-item {{
     padding: 10px 12px;
-    border-radius: 10px;
+    border-radius: var(--radius);
     border: 1px solid transparent;
     color: var(--muted);
     transition: 0.2s ease;
     cursor: pointer;
-    font-size: 0.9rem;
-    margin: 3px 0;
 }}
 
 .chat-item:hover {{
@@ -177,7 +187,7 @@ div[data-testid="stDecoration"] {{
 
 .chat-item-active {{
     background: rgba(79,124,255,0.12);
-    border-left: 2px solid #4f7cff;
+    border-color: rgba(79,124,255,0.35);
     color: var(--text);
 }}
 
@@ -198,28 +208,21 @@ div[data-testid="stDecoration"] {{
     font-size: 0.85rem;
 }}
 
-.stTextInput input,
-.stChatInput textarea {{
-    background: var(--panel) !important;
-    border-radius: var(--radius) !important;
-    color: var(--text) !important;
-    padding: 10px 12px !important;
-    border: 1px solid var(--border) !important;
+.stTextInput input, .stChatInput textarea {{
+    background: var(--panel);
+    border-radius: var(--radius);
+    color: var(--text);
+    padding: 10px 12px;
 }}
 
-.stTextInput input:focus,
-.stChatInput textarea:focus {{
-    border-color: var(--accent) !important;
+.stTextInput input:focus, .stChatInput textarea:focus {{
+    border-color: var(--accent);
     box-shadow: none !important;
     outline: none !important;
 }}
 
 ::placeholder {{
     color: {placeholder_color} !important;
-}}
-
-.stTextInput label {{
-    color: var(--muted) !important;
 }}
 
 .stChatMessage {{
@@ -241,7 +244,10 @@ div[data-testid="stDecoration"] {{
     border-radius: 18px 18px 4px 18px;
     max-width: 80%;
     font-size: 0.95rem;
-    word-wrap: break-word;
+}}
+
+.stChatMessage[data-testid="stChatMessageUser"] * {{
+    color: {user_msg_text} !important;
 }}
 
 .stChatMessage[data-testid="stChatMessageUser"] p {{
@@ -261,7 +267,10 @@ div[data-testid="stDecoration"] {{
     max-width: 80%;
     font-size: 0.95rem;
     border: 1px solid var(--border);
-    word-wrap: break-word;
+}}
+
+.stChatMessage[data-testid="stChatMessageAssistant"] * {{
+    color: {assistant_msg_text} !important;
 }}
 
 .stChatMessage[data-testid="stChatMessageAssistant"] p {{
@@ -269,54 +278,54 @@ div[data-testid="stDecoration"] {{
 }}
 
 .stButton button {{
-    background: var(--accent) !important;
-    color: white !important;
-    border-radius: 10px !important;
-    border: none !important;
-    font-weight: 500 !important;
-    transition: 0.2s ease !important;
+    background: var(--accent);
+    color: white;
+    border-radius: 10px;
+    border: none;
+    font-weight: 500;
+    transition: 0.2s ease;
 }}
 
 .stButton button:hover {{
-    opacity: 0.9 !important;
-}}
-
-.stChatInput button {{
-    background: var(--accent) !important;
-    border-radius: 10px !important;
+    opacity: 0.9;
 }}
 
 .stTabs [data-baseweb="tab"] {{
-    color: var(--muted) !important;
+    color: var(--muted);
 }}
 
 .stTabs [aria-selected="true"] {{
-    color: var(--text) !important;
-    border-bottom: 2px solid var(--accent) !important;
+    color: var(--text);
+    border-bottom: none !important;
 }}
 
-::-webkit-scrollbar {{ width: 6px; }}
+::-webkit-scrollbar {{
+    width: 6px;
+}}
+
 ::-webkit-scrollbar-thumb {{
-    background: {scrollbar_color};
+    background: rgba(255,255,255,0.15);
     border-radius: 10px;
 }}
 
+#MainMenu {{ visibility: hidden; }}
+footer {{ visibility: hidden; }}
+
 @media (max-width: 768px) {{
     .main-header h1 {{ font-size: 1.5rem; }}
+    .stChatMessage {{ padding: 10px; }}
     .stChatMessage[data-testid="stChatMessageUser"] > div,
     .stChatMessage[data-testid="stChatMessageAssistant"] > div {{
         max-width: 92%;
         font-size: 0.9rem;
     }}
 }}
-
-#MainMenu {{ visibility: hidden; }}
-footer {{ visibility: hidden; }}
 """
 
 st.markdown(f"<style>{get_css_styles(st.session_state.dark_mode)}</style>", unsafe_allow_html=True)
 
 # ===== GOOGLE SHEETS =====
+@st.cache_resource
 def get_sheets():
     try:
         creds = Credentials.from_service_account_info(
@@ -330,6 +339,7 @@ def get_sheets():
         workbook = client.open_by_key(SHEET_ID)
         return workbook.sheet1, workbook.worksheet(USERS_SHEET_NAME)
     except Exception as e:
+        st.error(handle_api_error(e))
         return None, None
 
 def register_user(username, password):
@@ -356,7 +366,7 @@ def login_user(username, password):
         try:
             users = users_sheet.get_all_records()
             for user in users:
-                if user.get("Username") == username and verify_password(str(user.get("Password", "")), password):
+                if user.get("Username") == username and verify_password(user.get("Password", ""), password):
                     return True
         except Exception as e:
             st.error(handle_api_error(e))
@@ -374,24 +384,24 @@ def save_chat(username, question, answer, chat_id):
                 chat_id
             ])
         except Exception as e:
-            pass
+            st.error(handle_api_error(e))
 
 def get_user_history(username):
     chat_sheet, _ = get_sheets()
     if chat_sheet:
         try:
             data = chat_sheet.get_all_records()
-            # Session ID column mein username store hota hai
-            return [row for row in data if row.get("Session ID") == username or row.get("Username") == username]
+            return [row for row in data if row.get("Username") == username]
         except Exception as e:
-            pass
+            st.error(handle_api_error(e))
     return []
 
 def load_user_chat_history(username: str):
+    """Load and structure user's chat history."""
     history = get_user_history(username)
     chats = {}
     for row in history:
-        cid = row.get("Chat ID") or row.get("Session ID") or "default"
+        cid = row.get("Session ID") or row.get("Chat ID") or "default"
         if cid not in chats:
             chats[cid] = []
         chats[cid].append({"role": "user", "content": row.get("User Question", "")})
@@ -456,7 +466,7 @@ if not st.session_state.logged_in:
 
         with tab3:
             st.markdown("### Guest Mode")
-            st.info("⚠️ Chat history will not be saved in Guest Mode!")
+            st.info("You are in Guest Mode!")
             if st.button("Continue as Guest 👤", use_container_width=True, key="guest_btn"):
                 st.session_state.logged_in = True
                 st.session_state.username = "Guest"
@@ -475,6 +485,7 @@ else:
         </div>
         """, unsafe_allow_html=True)
 
+        # New Chat button
         if st.button("➕ New Chat", use_container_width=True):
             if st.session_state.messages:
                 st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
@@ -484,6 +495,7 @@ else:
 
         st.divider()
 
+        # Show Old Chats
         if not st.session_state.is_guest and st.session_state.all_chats:
             st.markdown("**💬 Old Chats:**")
             for chat_id, chat_msgs in reversed(list(st.session_state.all_chats.items())):
@@ -492,7 +504,7 @@ else:
                     is_active = chat_id == st.session_state.current_chat_id
                     css_class = "chat-item chat-item-active" if is_active else "chat-item"
                     st.markdown(f'<div class="{css_class}">💬 {first_q}</div>', unsafe_allow_html=True)
-                    if st.button("Open", key=f"chat_{chat_id}"):
+                    if st.button(f"Open", key=f"chat_{chat_id}"):
                         if st.session_state.messages:
                             st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
                         st.session_state.current_chat_id = chat_id
@@ -502,6 +514,7 @@ else:
 
         st.divider()
 
+        # User info and theme toggle
         if st.session_state.is_guest:
             st.markdown("👤 **Guest Mode**")
         else:
@@ -533,75 +546,111 @@ else:
     """, unsafe_allow_html=True)
     st.divider()
 
-    # ===== AI SETUP (no cache - username changes) =====
-    llm = ChatGroq(model=MODEL_NAME, temperature=TEMPERATURE)
-    prompt = ChatPromptTemplate.from_messages([
-        ("system", f"""
-You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.
+    # AI Setup
+    @st.cache_resource
+    def init_chatbot():
+        llm = ChatGroq(model=MODEL_NAME, temperature=TEMPERATURE)
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", f"""
+    You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.
 
-═══════════════════════════════════
-🧠 CORE IDENTITY
-═══════════════════════════════════
-- You are sharp, accurate, and practical — not generic.
-- You think step-by-step internally but respond clearly and directly.
-- You give **high-value, structured, and actionable answers**.
-- You avoid fluff, repetition, and vague statements.
+    ═══════════════════════════════════
+    🧠 CORE IDENTITY
+    ═══════════════════════════════════
+    - You are sharp, accurate, and practical — not generic.
+    - You think step-by-step internally but respond clearly and directly.
+    - You give **high-value, structured, and actionable answers**.
+    - You avoid fluff, repetition, and vague statements.
 
-═══════════════════════════════════
-📅 CONTEXT
-═══════════════════════════════════
-- Current Date: {get_timestamp_display()}
-- User Name: {st.session_state.username}
+    ═══════════════════════════════════
+    📅 CONTEXT
+    ═══════════════════════════════════
+    - Current Date: {get_timestamp_display()}
+    - User Name: {st.session_state.username}
 
-═══════════════════════════════════
-🌐 LANGUAGE INTELLIGENCE (STRICT RULE)
-═══════════════════════════════════
-- ALWAYS match user's language style:
-  • English → English
-  • Hindi → Hindi
-  • Hinglish → Hinglish (natural, not forced)
-- Never switch language unless user does.
+    ═══════════════════════════════════
+    🌐 LANGUAGE INTELLIGENCE (STRICT RULE)
+    ═══════════════════════════════════
+    - ALWAYS match user's language style:
+    • English → English
+    • Hindi → Hindi
+    • Hinglish → Hinglish (natural, not forced)
+    - Never switch language unless user does.
 
-═══════════════════════════════════
-⚡ RESPONSE STYLE
-═══════════════════════════════════
-- Start with a clear answer, then expand if needed
-- Use bullet points for clarity
-- Keep tone smart, helpful, slightly conversational
+    ═══════════════════════════════════
+    ⚡ RESPONSE STYLE (VERY IMPORTANT)
+    ═══════════════════════════════════
+    - Start with a **clear answer**, then expand if needed
+    - Use bullet points for clarity
+    - Keep tone smart, helpful, slightly conversational
 
-═══════════════════════════════════
-🎯 GOAL
-═══════════════════════════════════
-Give answers that feel like expert guidance, not just information.
-Always aim: "User ko real value mile — not just response"
-"""),
-        MessagesPlaceholder(variable_name="history"),
-        ("human", "{input}")
-    ])
-    chain = prompt | llm
+    ═══════════════════════════════════
+    🎯 GOAL
+    ═══════════════════════════════════
+    Give answers that feel like expert guidance, not just information.
+    Always aim: **"User ko real value mile — not just response"**
+    """),
 
-    def get_session_history(session_id: str):
-        if session_id not in st.session_state.store:
-            st.session_state.store[session_id] = ChatMessageHistory()
-        return st.session_state.store[session_id]
+            MessagesPlaceholder(variable_name="history"),
+            ("human", "{input}")
+        ])
+        chain = prompt | llm
 
-    chatbot = RunnableWithMessageHistory(
-        chain, get_session_history,
-        input_messages_key="input",
-        history_messages_key="history"
-    )
+        def get_session_history(session_id: str):
+            if session_id not in st.session_state.store:
+                st.session_state.store[session_id] = ChatMessageHistory()
+            return st.session_state.store[session_id]
 
-    # ===== SHOW MESSAGES =====
+        return RunnableWithMessageHistory(
+            chain, get_session_history,
+            input_messages_key="input",
+            history_messages_key="history"
+        )
+
+    chatbot = init_chatbot()
+
+    # Show Messages - Theme aware colors
+    if st.session_state.dark_mode:
+        user_bg, user_text = "#4f7cff", "#ffffff"
+        assistant_bg, assistant_text = "#2d2d2d", "#e8eef5"
+        assistant_border = "#404040"
+    else:
+        user_bg, user_text = "#4f7cff", "#ffffff"
+        assistant_bg, assistant_text = "#f0f2f5", "#1a1a1a"
+        assistant_border = "#e0e0e0"
+
     for msg in st.session_state.messages:
-        with st.chat_message(msg["role"]):
-            st.markdown(msg["content"])
+        # Escape HTML special characters
+        content = (msg['content']
+                  .replace('&', '&amp;')
+                  .replace('<', '&lt;')
+                  .replace('>', '&gt;')
+                  .replace('"', '&quot;')
+                  .replace("'", '&#39;'))
 
-    # ===== INPUT =====
+        if msg["role"] == "user":
+            st.markdown(f"""
+            <div style="display: flex; justify-content: flex-end; margin: 8px 0;">
+                <div style="background: {user_bg}; color: {user_text}; padding: 10px 14px; border-radius: 18px 18px 4px 18px; max-width: 80%; word-wrap: break-word; font-family: Inter, sans-serif; font-size: 0.95rem;">
+                    {content}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
+                <div style="background: {assistant_bg}; color: {assistant_text}; padding: 10px 14px; border-radius: 18px 18px 18px 4px; max-width: 80%; word-wrap: break-word; border: 1px solid {assistant_border}; font-family: Inter, sans-serif; font-size: 0.95rem;">
+                    {content}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # Input
     user_input = st.chat_input("⚡ Ask Anything To Power AI...")
 
     if user_input:
         with st.chat_message("user"):
-            st.markdown(user_input)
+            st.write(user_input)
         st.session_state.messages.append({"role": "user", "content": user_input})
 
         with st.spinner("⚡ Thinking..."):
@@ -614,17 +663,11 @@ Always aim: "User ko real value mile — not just response"
             except Exception as e:
                 bot_reply = handle_api_error(e)
 
-        # ===== TYPING ANIMATION =====
         with st.chat_message("assistant"):
-            placeholder = st.empty()
-            displayed = ""
-            for char in bot_reply:
-                displayed += char
-                placeholder.markdown(displayed + "▌")
-            placeholder.markdown(displayed)
-
+            st.write(bot_reply)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
+        # Save
         if not st.session_state.is_guest:
             save_chat(st.session_state.username, user_input, bot_reply, st.session_state.current_chat_id)
             st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
