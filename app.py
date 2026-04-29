@@ -109,7 +109,6 @@ def get_theme_colors():
         "border": "rgba(0,0,0,0.1)",
     }
 
-@st.cache_data
 def get_css_styles(dark_mode=True):
     theme = get_theme_colors()
     bg = theme["bg"]
@@ -508,12 +507,10 @@ else:
         if st.session_state.dark_mode:
             if st.button("☀️ Light Mode", use_container_width=True):
                 st.session_state.dark_mode = False
-                st.cache_data.clear()
                 st.rerun()
         else:
             if st.button("🌙 Dark Mode", use_container_width=True):
                 st.session_state.dark_mode = True
-                st.cache_data.clear()
                 st.rerun()
 
         if st.button("🚪 Logout", use_container_width=True):
