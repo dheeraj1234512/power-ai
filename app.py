@@ -619,31 +619,30 @@ else:
         assistant_bg, assistant_text = "#f0f2f5", "#1a1a1a"
         assistant_border = "#e0e0e0"
 
-    for msg in st.session_state.messages:
-        # Escape HTML special characters
-        content = (msg['content']
-                  .replace('&', '&amp;')
-                  .replace('<', '&lt;')
-                  .replace('>', '&gt;')
-                  .replace('"', '&quot;')
-                  .replace("'", '&#39;'))
-
-        if msg["role"] == "user":
-            st.markdown(f"""
-            <div style="display: flex; justify-content: flex-end; margin: 8px 0;">
-                <div style="background: {user_bg}; color: {user_text}; padding: 10px 14px; border-radius: 18px 18px 4px 18px; max-width: 80%; word-wrap: break-word; font-family: Inter, sans-serif; font-size: 0.95rem;">
-                    {content}
-                </div>
+    # ===== SHOW MESSAGES =====
+for msg in st.session_state.messages:
+    if msg["role"] == "user":
+        st.markdown(f"""
+        <div style="display:flex; justify-content:flex-end; margin:8px 0;">
+            <div style="background:{'#1f2a37' if st.session_state.dark_mode else '#4f7cff'}; 
+            color:#ffffff; padding:10px 14px; border-radius:18px 18px 4px 18px; 
+            max-width:80%; font-size:0.95rem; word-wrap:break-word; font-family:Inter,sans-serif;">
+                {msg["content"]}
             </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown(f"""
-            <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
-                <div style="background: {assistant_bg}; color: {assistant_text}; padding: 10px 14px; border-radius: 18px 18px 18px 4px; max-width: 80%; word-wrap: break-word; border: 1px solid {assistant_border}; font-family: Inter, sans-serif; font-size: 0.95rem;">
-                    {content}
-                </div>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"""
+        <div style="display:flex; justify-content:flex-start; margin:8px 0;">
+            <div style="background:{'#111823' if st.session_state.dark_mode else '#f0f2f5'}; 
+            color:{'#e8eef5' if st.session_state.dark_mode else '#1a1a1a'}; 
+            padding:10px 14px; border-radius:18px 18px 18px 4px; 
+            max-width:80%; font-size:0.95rem; word-wrap:break-word; font-family:Inter,sans-serif;
+            border:1px solid {'rgba(255,255,255,0.08)' if st.session_state.dark_mode else 'rgba(0,0,0,0.1)'};">
+                {msg["content"]}
             </div>
-            """, unsafe_allow_html=True)
+        </div>
+        """, unsafe_allow_html=True)
 
     # Input
     user_input = st.chat_input("⚡ Ask Anything To Power AI...")
