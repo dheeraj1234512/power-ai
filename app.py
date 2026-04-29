@@ -246,6 +246,14 @@ div[data-testid="stDecoration"] {{
     font-size: 0.95rem;
 }}
 
+.stChatMessage[data-testid="stChatMessageUser"] * {{
+    color: {user_msg_text} !important;
+}}
+
+.stChatMessage[data-testid="stChatMessageUser"] p {{
+    color: {user_msg_text} !important;
+}}
+
 .stChatMessage[data-testid="stChatMessageAssistant"] {{
     display: flex;
     justify-content: flex-start;
@@ -259,6 +267,14 @@ div[data-testid="stDecoration"] {{
     max-width: 80%;
     font-size: 0.95rem;
     border: 1px solid var(--border);
+}}
+
+.stChatMessage[data-testid="stChatMessageAssistant"] * {{
+    color: {assistant_msg_text} !important;
+}}
+
+.stChatMessage[data-testid="stChatMessageAssistant"] p {{
+    color: {assistant_msg_text} !important;
 }}
 
 .stButton button {{
