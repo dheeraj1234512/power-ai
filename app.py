@@ -5,6 +5,7 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 import hashlib
 import secrets
+import base64
 
 if "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
@@ -39,6 +40,7 @@ def init_session_state():
         "active_tab": "login",
         "reg_success": False,
         "dark_mode": True,
+        "img_key": 0,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -63,31 +65,34 @@ def handle_api_error(error: Exception) -> str:
     return "Error processing request. Please try again."
 
 def hash_password(password, salt=None):
-    """Hash password with salt. If salt is None, generate a new one."""
     if salt is None:
         salt = secrets.token_hex(16)
     hashed = hashlib.sha256((salt + password).encode()).hexdigest()
     return f"{salt}${hashed}"
 
 def verify_password(stored_hash, password):
-    """Verify password against stored hash."""
     try:
         salt, hashed = stored_hash.split("$")
         return hash_password(password, salt) == stored_hash
     except ValueError:
-        # Fallback for old unsalted hashes
         return hashlib.sha256(password.encode()).hexdigest() == stored_hash
 
 def reset_chat_state():
-    """Reset chat messages and store."""
     st.session_state.messages = []
     st.session_state.store = {}
 
 def reset_all_state():
-    """Reset all chat state including history."""
     st.session_state.messages = []
     st.session_state.all_chats = {}
     st.session_state.store = {}
+
+def escape_html(text):
+    return (text
+        .replace('&', '&amp;')
+        .replace('<', '&lt;')
+        .replace('>', '&gt;')
+        .replace('"', '&quot;')
+        .replace("'", '&#39;'))
 
 # ===== THEME & CSS =====
 def get_theme_colors():
@@ -118,7 +123,6 @@ def get_css_styles(dark_mode=True):
     soft = theme["soft"]
     border = theme["border"]
 
-    # Chat bubble colors based on theme
     if dark_mode:
         user_msg_bg = "#1f2a37"
         user_msg_text = "#ffffff"
@@ -350,11 +354,7 @@ def register_user(username, password):
             for user in users:
                 if user.get("Username") == username:
                     return False, "Username already exists!"
-            users_sheet.append_row([
-                username,
-                hash_password(password),
-                get_timestamp_datetime()
-            ])
+            users_sheet.append_row([username, hash_password(password), get_timestamp_datetime()])
             return True, "Registration successful!"
         except Exception as e:
             return False, handle_api_error(e)
@@ -376,15 +376,9 @@ def save_chat(username, question, answer, chat_id):
     chat_sheet, _ = get_sheets()
     if chat_sheet:
         try:
-            chat_sheet.append_row([
-                get_timestamp_datetime(),
-                question,
-                answer,
-                username,
-                chat_id
-            ])
-        except Exception as e:
-            st.error(handle_api_error(e))
+            chat_sheet.append_row([get_timestamp_datetime(), question, answer, username, chat_id])
+        except:
+            pass
 
 def get_user_history(username):
     chat_sheet, _ = get_sheets()
@@ -392,12 +386,11 @@ def get_user_history(username):
         try:
             data = chat_sheet.get_all_records()
             return [row for row in data if row.get("Username") == username]
-        except Exception as e:
-            st.error(handle_api_error(e))
+        except:
+            pass
     return []
 
 def load_user_chat_history(username: str):
-    """Load and structure user's chat history."""
     history = get_user_history(username)
     chats = {}
     for row in history:
@@ -466,7 +459,7 @@ if not st.session_state.logged_in:
 
         with tab3:
             st.markdown("### Guest Mode")
-            st.info("You are in Guest Mode!")
+            st.info("⚠️ Chat history will not be saved in Guest Mode!")
             if st.button("Continue as Guest 👤", use_container_width=True, key="guest_btn"):
                 st.session_state.logged_in = True
                 st.session_state.username = "Guest"
@@ -477,15 +470,9 @@ if not st.session_state.logged_in:
 
 # ===== CHAT PAGE =====
 else:
-    # ===== SIDEBAR =====
     with st.sidebar:
-        st.markdown("""
-        <div class="sidebar-header">
-            <h2>⚡ POWER AI</h2>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown('<div class="sidebar-header"><h2>⚡ POWER AI</h2></div>', unsafe_allow_html=True)
 
-        # New Chat button
         if st.button("➕ New Chat", use_container_width=True):
             if st.session_state.messages:
                 st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
@@ -495,7 +482,6 @@ else:
 
         st.divider()
 
-        # Show Old Chats
         if not st.session_state.is_guest and st.session_state.all_chats:
             st.markdown("**💬 Old Chats:**")
             for chat_id, chat_msgs in reversed(list(st.session_state.all_chats.items())):
@@ -503,7 +489,6 @@ else:
                     first_q = chat_msgs[0]["content"][:28] + "..." if len(chat_msgs[0]["content"]) > 28 else chat_msgs[0]["content"]
                     is_active = chat_id == st.session_state.current_chat_id
                     css_class = "chat-item chat-item-active" if is_active else "chat-item"
-                    
                     col1, col2 = st.columns([5, 1])
                     with col1:
                         st.markdown(f'<div class="{css_class}">💬 {first_q}</div>', unsafe_allow_html=True)
@@ -524,7 +509,6 @@ else:
 
         st.divider()
 
-        # User info and theme toggle
         if st.session_state.is_guest:
             st.markdown("👤 **Guest Mode**")
         else:
@@ -539,7 +523,29 @@ else:
                 st.session_state.dark_mode = True
                 st.rerun()
 
-
+        if not st.session_state.is_guest:
+            with st.expander("⚙️ Settings"):
+                st.markdown("**🔐 Change Password**")
+                old_pass = st.text_input("Current Password:", type="password", key="old_pass")
+                new_pass_input = st.text_input("New Password:", type="password", key="new_pass")
+                confirm_new = st.text_input("Confirm New Password:", type="password", key="confirm_new")
+                if st.button("Update Password", use_container_width=True, key="update_pass"):
+                    if old_pass and new_pass_input and confirm_new:
+                        if new_pass_input != confirm_new:
+                            st.error("❌ Passwords don't match!")
+                        elif not login_user(st.session_state.username, old_pass):
+                            st.error("❌ Current password is wrong!")
+                        else:
+                            _, users_sheet = get_sheets()
+                            if users_sheet:
+                                users = users_sheet.get_all_records()
+                                for i, user in enumerate(users):
+                                    if user.get("Username") == st.session_state.username:
+                                        users_sheet.update_cell(i + 2, 2, hash_password(new_pass_input))
+                                        st.success("✅ Password updated!")
+                                        break
+                    else:
+                        st.warning("⚠️ Fill all fields!")
 
         if st.button("🚪 Logout", use_container_width=True):
             st.session_state.logged_in = False
@@ -548,30 +554,7 @@ else:
             reset_all_state()
             st.session_state.reg_success = False
             st.rerun()
-        # Settings
-        with st.expander("⚙️ Settings"):
-            st.markdown("**🔐 Change Password**")
-            old_pass = st.text_input("Current Password:", type="password", key="old_pass")
-            new_pass = st.text_input("New Password:", type="password", key="new_pass")
-            confirm_new = st.text_input("Confirm New Password:", type="password", key="confirm_new")
-            
-            if st.button("Update Password", use_container_width=True, key="update_pass"):
-                if old_pass and new_pass and confirm_new:
-                    if new_pass != confirm_new:
-                        st.error("❌ Passwords don't match!")
-                    elif not login_user(st.session_state.username, old_pass):
-                        st.error("❌ Current password is wrong!")
-                    else:
-                        _, users_sheet = get_sheets()
-                        if users_sheet:
-                            users = users_sheet.get_all_records()
-                            for i, user in enumerate(users):
-                                if user.get("Username") == st.session_state.username:
-                                    users_sheet.update_cell(i + 2, 2, hash_password(new_pass))
-                                    st.success("✅ Password updated!")
-                                    break
-                else:
-                    st.warning("⚠️ Fill all fields!")
+
     # ===== MAIN CHAT AREA =====
     st.markdown("""
     <div class="main-header">
@@ -581,50 +564,49 @@ else:
     """, unsafe_allow_html=True)
     st.divider()
 
-    # AI Setup
+    # ===== AI SETUP =====
     def init_chatbot():
         llm = ChatGroq(model=MODEL_NAME, temperature=TEMPERATURE)
         prompt = ChatPromptTemplate.from_messages([
             ("system", f"""
-    You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.
+You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.
 
-    ═══════════════════════════════════
-    🧠 CORE IDENTITY
-    ═══════════════════════════════════
-    - You are sharp, accurate, and practical — not generic.
-    - You think step-by-step internally but respond clearly and directly.
-    - You give **high-value, structured, and actionable answers**.
-    - You avoid fluff, repetition, and vague statements.
+═══════════════════════════════════
+🧠 CORE IDENTITY
+═══════════════════════════════════
+- You are sharp, accurate, and practical — not generic.
+- You think step-by-step internally but respond clearly and directly.
+- You give **high-value, structured, and actionable answers**.
+- You avoid fluff, repetition, and vague statements.
 
-    ═══════════════════════════════════
-    📅 CONTEXT
-    ═══════════════════════════════════
-    - Current Date: {get_timestamp_display()}
-    - User Name: {st.session_state.username}
+═══════════════════════════════════
+📅 CONTEXT
+═══════════════════════════════════
+- Current Date: {get_timestamp_display()}
+- User Name: {st.session_state.username}
 
-    ═══════════════════════════════════
-    🌐 LANGUAGE INTELLIGENCE (STRICT RULE)
-    ═══════════════════════════════════
-    - ALWAYS match user's language style:
-    • English → English
-    • Hindi → Hindi
-    • Hinglish → Hinglish (natural, not forced)
-    - Never switch language unless user does.
+═══════════════════════════════════
+🌐 LANGUAGE INTELLIGENCE (STRICT RULE)
+═══════════════════════════════════
+- ALWAYS match user's language style:
+  • English → English
+  • Hindi → Hindi
+  • Hinglish → Hinglish (natural, not forced)
+- Never switch language unless user does.
 
-    ═══════════════════════════════════
-    ⚡ RESPONSE STYLE (VERY IMPORTANT)
-    ═══════════════════════════════════
-    - Start with a **clear answer**, then expand if needed
-    - Use bullet points for clarity
-    - Keep tone smart, helpful, slightly conversational
+═══════════════════════════════════
+⚡ RESPONSE STYLE
+═══════════════════════════════════
+- Start with a clear answer, then expand if needed
+- Use bullet points for clarity
+- Keep tone smart, helpful, slightly conversational
 
-    ═══════════════════════════════════
-    🎯 GOAL
-    ═══════════════════════════════════
-    Give answers that feel like expert guidance, not just information.
-    Always aim: **"User ko real value mile — not just response"**
-    """),
-
+═══════════════════════════════════
+🎯 GOAL
+═══════════════════════════════════
+Give answers that feel like expert guidance, not just information.
+Always aim: "User ko real value mile — not just response"
+"""),
             MessagesPlaceholder(variable_name="history"),
             ("human", "{input}")
         ])
@@ -643,7 +625,7 @@ else:
 
     chatbot = init_chatbot()
 
-    # Show Messages - Theme aware colors
+    # ===== THEME COLORS =====
     if st.session_state.dark_mode:
         user_bg, user_text = "#4f7cff", "#ffffff"
         assistant_bg, assistant_text = "#2d2d2d", "#e8eef5"
@@ -653,64 +635,85 @@ else:
         assistant_bg, assistant_text = "#f0f2f5", "#1a1a1a"
         assistant_border = "#e0e0e0"
 
+    # ===== SHOW MESSAGES =====
     for msg in st.session_state.messages:
-        # Escape HTML special characters
-        content = (msg['content']
-                  .replace('&', '&amp;')
-                  .replace('<', '&lt;')
-                  .replace('>', '&gt;')
-                  .replace('"', '&quot;')
-                  .replace("'", '&#39;'))
-
+        content = escape_html(msg['content'])
         if msg["role"] == "user":
             st.markdown(f"""
-            <div style="display: flex; justify-content: flex-end; margin: 8px 0;">
-                <div style="background: {user_bg}; color: {user_text}; padding: 10px 14px; border-radius: 18px 18px 4px 18px; max-width: 80%; word-wrap: break-word; font-family: Inter, sans-serif; font-size: 0.95rem;">
+            <div style="display:flex; justify-content:flex-end; margin:8px 0;">
+                <div style="background:{user_bg}; color:{user_text}; padding:10px 14px; border-radius:18px 18px 4px 18px; max-width:80%; word-wrap:break-word; font-family:Inter,sans-serif; font-size:0.95rem;">
                     {content}
                 </div>
-            </div>
-            """, unsafe_allow_html=True)
+            </div>""", unsafe_allow_html=True)
         else:
             st.markdown(f"""
-            <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
-                <div style="background: {assistant_bg}; color: {assistant_text}; padding: 10px 14px; border-radius: 18px 18px 18px 4px; max-width: 80%; word-wrap: break-word; border: 1px solid {assistant_border}; font-family: Inter, sans-serif; font-size: 0.95rem;">
+            <div style="display:flex; justify-content:flex-start; margin:8px 0;">
+                <div style="background:{assistant_bg}; color:{assistant_text}; padding:10px 14px; border-radius:18px 18px 18px 4px; max-width:80%; word-wrap:break-word; border:1px solid {assistant_border}; font-family:Inter,sans-serif; font-size:0.95rem;">
                     {content}
                 </div>
-            </div>
-            """, unsafe_allow_html=True)
+            </div>""", unsafe_allow_html=True)
 
-    # Input
-    # Image upload
-    uploaded_image = st.file_uploader("📷 Image Upload (Optional)", type=["jpg", "jpeg", "png", "webp"], label_visibility="collapsed")
-    user_input = st.chat_input("⚡ Ask Anything To Power AI...")
+    # ===== INPUT AREA =====
+    col_input, col_upload = st.columns([11, 1])
+    with col_upload:
+        with st.popover("📎"):
+            uploaded_image = st.file_uploader(
+                "Image Upload",
+                type=["jpg", "jpeg", "png", "webp"],
+                label_visibility="collapsed",
+                key=f"img_{st.session_state.img_key}"
+            )
+    with col_input:
+        user_input = st.chat_input("⚡ Ask Anything To Power AI...")
 
     if user_input:
-        content_escaped = (user_input
-            .replace('&', '&amp;').replace('<', '&lt;')
-            .replace('>', '&gt;').replace('"', '&quot;')
-            .replace("'", '&#39;'))
+        # Image process karo
+        image_content = None
+        if uploaded_image:
+            image_bytes = uploaded_image.read()
+            image_b64 = base64.b64encode(image_bytes).decode()
+            image_type = uploaded_image.type
+            image_content = f"data:{image_type};base64,{image_b64}"
+            st.session_state.img_key += 1  # Image clear karo
+
+        # User message dikhao
+        content_escaped = escape_html(user_input)
         st.markdown(f"""
         <div style="display:flex; justify-content:flex-end; margin:8px 0;">
             <div style="background:{user_bg}; color:{user_text}; padding:10px 14px; border-radius:18px 18px 4px 18px; max-width:80%; word-wrap:break-word; font-family:Inter,sans-serif; font-size:0.95rem;">
                 {content_escaped}
             </div>
         </div>""", unsafe_allow_html=True)
+
         st.session_state.messages.append({"role": "user", "content": user_input})
 
         with st.spinner("⚡ Thinking..."):
             try:
-                response = chatbot.invoke(
-                    {"input": user_input},
-                    config={"configurable": {"session_id": st.session_state.current_chat_id}}
-                )
-                bot_reply = response.content
+                if image_content:
+                    from groq import Groq
+                    client = Groq()
+                    vision_response = client.chat.completions.create(
+                        model="meta-llama/llama-4-scout-17b-16e-instruct",
+                        messages=[{
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": user_input},
+                                {"type": "image_url", "image_url": {"url": image_content}}
+                            ]
+                        }]
+                    )
+                    bot_reply = vision_response.choices[0].message.content
+                else:
+                    response = chatbot.invoke(
+                        {"input": user_input},
+                        config={"configurable": {"session_id": st.session_state.current_chat_id}}
+                    )
+                    bot_reply = response.content
             except Exception as e:
                 bot_reply = handle_api_error(e)
 
-        reply_escaped = (bot_reply
-            .replace('&', '&amp;').replace('<', '&lt;')
-            .replace('>', '&gt;').replace('"', '&quot;')
-            .replace("'", '&#39;'))
+        # Typing animation
+        reply_escaped = escape_html(bot_reply)
         placeholder = st.empty()
         displayed = ""
         for char in reply_escaped:
@@ -727,9 +730,9 @@ else:
                 {reply_escaped}
             </div>
         </div>""", unsafe_allow_html=True)
+
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
-        # Save
         if not st.session_state.is_guest:
             save_chat(st.session_state.username, user_input, bot_reply, st.session_state.current_chat_id)
             st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
