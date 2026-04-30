@@ -547,7 +547,6 @@ else:
     st.divider()
 
     # AI Setup
-    @st.cache_resource
     def init_chatbot():
         llm = ChatGroq(model=MODEL_NAME, temperature=TEMPERATURE)
         prompt = ChatPromptTemplate.from_messages([
@@ -649,8 +648,16 @@ else:
     user_input = st.chat_input("⚡ Ask Anything To Power AI...")
 
     if user_input:
-        with st.chat_message("user"):
-            st.write(user_input)
+        content_escaped = (user_input
+            .replace('&', '&amp;').replace('<', '&lt;')
+            .replace('>', '&gt;').replace('"', '&quot;')
+            .replace("'", '&#39;'))
+        st.markdown(f"""
+        <div style="display:flex; justify-content:flex-end; margin:8px 0;">
+            <div style="background:{user_bg}; color:{user_text}; padding:10px 14px; border-radius:18px 18px 4px 18px; max-width:80%; word-wrap:break-word; font-family:Inter,sans-serif; font-size:0.95rem;">
+                {content_escaped}
+            </div>
+        </div>""", unsafe_allow_html=True)
         st.session_state.messages.append({"role": "user", "content": user_input})
 
         with st.spinner("⚡ Thinking..."):
@@ -663,8 +670,26 @@ else:
             except Exception as e:
                 bot_reply = handle_api_error(e)
 
-        with st.chat_message("assistant"):
-            st.write(bot_reply)
+        reply_escaped = (bot_reply
+            .replace('&', '&amp;').replace('<', '&lt;')
+            .replace('>', '&gt;').replace('"', '&quot;')
+            .replace("'", '&#39;'))
+        placeholder = st.empty()
+        displayed = ""
+        for char in reply_escaped:
+            displayed += char
+            placeholder.markdown(f"""
+            <div style="display:flex; justify-content:flex-start; margin:8px 0;">
+                <div style="background:{assistant_bg}; color:{assistant_text}; padding:10px 14px; border-radius:18px 18px 18px 4px; max-width:80%; word-wrap:break-word; border:1px solid {assistant_border}; font-family:Inter,sans-serif; font-size:0.95rem;">
+                    {displayed}▌
+                </div>
+            </div>""", unsafe_allow_html=True)
+        placeholder.markdown(f"""
+        <div style="display:flex; justify-content:flex-start; margin:8px 0;">
+            <div style="background:{assistant_bg}; color:{assistant_text}; padding:10px 14px; border-radius:18px 18px 18px 4px; max-width:80%; word-wrap:break-word; border:1px solid {assistant_border}; font-family:Inter,sans-serif; font-size:0.95rem;">
+                {reply_escaped}
+            </div>
+        </div>""", unsafe_allow_html=True)
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
         # Save
