@@ -681,8 +681,12 @@ else:
 
     # Input
     # Image upload
-    uploaded_image = st.file_uploader("📷 Image Upload (Optional)", type=["jpg", "jpeg", "png", "webp"], label_visibility="collapsed")
-    user_input = st.chat_input("⚡ Ask Anything To Power AI...")
+    col_input, col_upload = st.columns([11, 1])
+    with col_upload:
+        with st.popover("📎"):
+            uploaded_image = st.file_uploader("Image Upload", type=["jpg", "jpeg", "png", "webp"], label_visibility="collapsed")
+    with col_input:
+        user_input = st.chat_input("⚡ Ask Anything To Power AI...")
 
     if user_input or uploaded_image:
         # Image handle karo
