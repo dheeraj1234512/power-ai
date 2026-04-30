@@ -39,6 +39,8 @@ def init_session_state():
         "active_tab": "login",
         "reg_success": False,
         "dark_mode": True,
+        "uploaded_image": None,
+        "img_key": 0,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -684,7 +686,7 @@ else:
     col_input, col_upload = st.columns([11, 1])
     with col_upload:
         with st.popover("📎"):
-            uploaded_image = st.file_uploader("Image Upload", type=["jpg", "jpeg", "png", "webp"], label_visibility="collapsed")
+            uploaded_image = st.file_uploader("Image Upload", type=["jpg", "jpeg", "png", "webp"], label_visibility="collapsed", key=f"img_{st.session_state.get('img_key', 0)}")
     with col_input:
         user_input = st.chat_input("⚡ Ask Anything To Power AI...")
 
@@ -697,6 +699,14 @@ else:
             image_b64 = base64.b64encode(image_bytes).decode()
             image_type = uploaded_image.type
             image_content = f"data:{image_type};base64,{image_b64}"
+        if image_content:
+            import base64
+            image_bytes = uploaded_image.read()
+            image_b64 = base64.b64encode(image_bytes).decode()
+            image_type = uploaded_image.type
+            image_content = f"data:{image_type};base64,{image_b64}"
+            # Image ek baar send hone ke baad clear karo
+            st.session_state['img_key'] = st.session_state.get('img_key', 0) + 1
             # Image dikhao
             st.image(uploaded_image, width=200)
 
