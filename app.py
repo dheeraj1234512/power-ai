@@ -39,7 +39,6 @@ def init_session_state():
         "active_tab": "login",
         "reg_success": False,
         "dark_mode": True,
-        "uploaded_image": None,
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -682,29 +681,11 @@ else:
 
     # Input
     # Image upload
-    col_input, col_upload = st.columns([11, 1])
-    with col_upload:
-        with st.popover("📎"):
-            uploaded_image = st.file_uploader("Image Upload", type=["jpg", "jpeg", "png", "webp"], label_visibility="collapsed", key=f"img_{st.session_state.get('img_key', 0)}")
-    with col_input:
-        user_input = st.chat_input("⚡ Ask Anything To Power AI...")
+    uploaded_image = st.file_uploader("📷 Image Upload (Optional)", type=["jpg", "jpeg", "png", "webp"], label_visibility="collapsed")
+    user_input = st.chat_input("⚡ Ask Anything To Power AI...")
 
     if user_input:
-        # Image handle karo
-        image_content = None
-        if uploaded_image:
-            import base64
-            image_bytes = uploaded_image.read()
-            image_b64 = base64.b64encode(image_bytes).decode()
-            image_type = uploaded_image.type
-            image_content = f"data:{image_type};base64,{image_b64}"
-
-            # Image dikhao
-            st.image(uploaded_image, width=200)
-
-        text_input = user_input
-
-        content_escaped = (text_input
+        content_escaped = (user_input
             .replace('&', '&amp;').replace('<', '&lt;')
             .replace('>', '&gt;').replace('"', '&quot;')
             .replace("'", '&#39;'))
@@ -714,34 +695,15 @@ else:
                 {content_escaped}
             </div>
         </div>""", unsafe_allow_html=True)
-
-        st.session_state.messages.append({"role": "user", "content": text_input})
+        st.session_state.messages.append({"role": "user", "content": user_input})
 
         with st.spinner("⚡ Thinking..."):
             try:
-                if image_content:
-                    # Vision wala request
-                    from groq import Groq
-                    client = Groq()
-                    vision_response = client.chat.completions.create(
-                        model="meta-llama/llama-4-scout-17b-16e-instruct",
-                        messages=[
-                            {
-                                "role": "user",
-                                "content": [
-                                    {"type": "text", "text": text_input},
-                                    {"type": "image_url", "image_url": {"url": image_content}}
-                                ]
-                            }
-                        ]
-                    )
-                    bot_reply = vision_response.choices[0].message.content
-                else:
-                    response = chatbot.invoke(
-                        {"input": text_input},
-                        config={"configurable": {"session_id": st.session_state.current_chat_id}}
-                    )
-                    bot_reply = response.content
+                response = chatbot.invoke(
+                    {"input": user_input},
+                    config={"configurable": {"session_id": st.session_state.current_chat_id}}
+                )
+                bot_reply = response.content
             except Exception as e:
                 bot_reply = handle_api_error(e)
 
@@ -765,9 +727,9 @@ else:
                 {reply_escaped}
             </div>
         </div>""", unsafe_allow_html=True)
-
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
+        # Save
         if not st.session_state.is_guest:
-            save_chat(st.session_state.username, text_input, bot_reply, st.session_state.current_chat_id)
+            save_chat(st.session_state.username, user_input, bot_reply, st.session_state.current_chat_id)
             st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
