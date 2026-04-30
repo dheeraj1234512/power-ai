@@ -500,32 +500,27 @@ else:
             st.markdown("**💬 Old Chats:**")
             for chat_id, chat_msgs in reversed(list(st.session_state.all_chats.items())):
                 if chat_msgs:
-                    first_q = chat_msgs[0]["content"][:30] + "..." if len(chat_msgs[0]["content"]) > 30 else chat_msgs[0]["content"]
+                    first_q = chat_msgs[0]["content"][:28] + "..." if len(chat_msgs[0]["content"]) > 28 else chat_msgs[0]["content"]
                     is_active = chat_id == st.session_state.current_chat_id
                     css_class = "chat-item chat-item-active" if is_active else "chat-item"
-                    col_chat, col_del = st.columns([4, 1])
-                    with col_chat:
+                    
+                    col1, col2 = st.columns([5, 1])
+                    with col1:
                         st.markdown(f'<div class="{css_class}">💬 {first_q}</div>', unsafe_allow_html=True)
-                        if st.button("Open", key=f"chat_{chat_id}"):
+                        if st.button("Open", key=f"open_{chat_id}"):
                             if st.session_state.messages:
                                 st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
                             st.session_state.current_chat_id = chat_id
                             st.session_state.messages = chat_msgs.copy()
                             st.session_state.store = {}
                             st.rerun()
-                    with col_del:
+                    with col2:
                         if st.button("🗑️", key=f"del_{chat_id}"):
                             del st.session_state.all_chats[chat_id]
                             if st.session_state.current_chat_id == chat_id:
                                 st.session_state.current_chat_id = get_timestamp_id()
                                 reset_chat_state()
                             st.rerun()
-                        if st.session_state.messages:
-                            st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
-                        st.session_state.current_chat_id = chat_id
-                        st.session_state.messages = chat_msgs.copy()
-                        st.session_state.store = {}
-                        st.rerun()
 
         st.divider()
 
