@@ -539,6 +539,15 @@ else:
                 st.session_state.dark_mode = True
                 st.rerun()
 
+
+
+        if st.button("🚪 Logout", use_container_width=True):
+            st.session_state.logged_in = False
+            st.session_state.username = ""
+            st.session_state.is_guest = False
+            reset_all_state()
+            st.session_state.reg_success = False
+            st.rerun()
         # Settings
         with st.expander("⚙️ Settings"):
             st.markdown("**🔐 Change Password**")
@@ -563,15 +572,6 @@ else:
                                     break
                 else:
                     st.warning("⚠️ Fill all fields!")
-
-        if st.button("🚪 Logout", use_container_width=True):
-            st.session_state.logged_in = False
-            st.session_state.username = ""
-            st.session_state.is_guest = False
-            reset_all_state()
-            st.session_state.reg_success = False
-            st.rerun()
-
     # ===== MAIN CHAT AREA =====
     st.markdown("""
     <div class="main-header">
