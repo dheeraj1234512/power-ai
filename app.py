@@ -548,7 +548,30 @@ else:
             reset_all_state()
             st.session_state.reg_success = False
             st.rerun()
-        
+        # Settings
+        with st.expander("⚙️ Settings"):
+            st.markdown("**🔐 Change Password**")
+            old_pass = st.text_input("Current Password:", type="password", key="old_pass")
+            new_pass = st.text_input("New Password:", type="password", key="new_pass")
+            confirm_new = st.text_input("Confirm New Password:", type="password", key="confirm_new")
+            
+            if st.button("Update Password", use_container_width=True, key="update_pass"):
+                if old_pass and new_pass and confirm_new:
+                    if new_pass != confirm_new:
+                        st.error("❌ Passwords don't match!")
+                    elif not login_user(st.session_state.username, old_pass):
+                        st.error("❌ Current password is wrong!")
+                    else:
+                        _, users_sheet = get_sheets()
+                        if users_sheet:
+                            users = users_sheet.get_all_records()
+                            for i, user in enumerate(users):
+                                if user.get("Username") == st.session_state.username:
+                                    users_sheet.update_cell(i + 2, 2, hash_password(new_pass))
+                                    st.success("✅ Password updated!")
+                                    break
+                else:
+                    st.warning("⚠️ Fill all fields!")
     # ===== MAIN CHAT AREA =====
     st.markdown("""
     <div class="main-header">
