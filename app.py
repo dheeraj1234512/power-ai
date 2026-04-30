@@ -688,7 +688,7 @@ else:
     with col_input:
         user_input = st.chat_input("⚡ Ask Anything To Power AI...")
 
-    if user_input or uploaded_image:
+    if user_input:
         # Image handle karo
         image_content = None
         if uploaded_image:
@@ -700,7 +700,7 @@ else:
             # Image dikhao
             st.image(uploaded_image, width=200)
 
-        text_input = user_input or "Is image ke baare mein batao"
+        text_input = user_input
 
         content_escaped = (text_input
             .replace('&', '&amp;').replace('<', '&lt;')
