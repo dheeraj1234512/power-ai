@@ -680,10 +680,25 @@ else:
             """, unsafe_allow_html=True)
 
     # Input
+    # Image upload
+    uploaded_image = st.file_uploader("📷 Image Upload (Optional)", type=["jpg", "jpeg", "png", "webp"], label_visibility="collapsed")
     user_input = st.chat_input("⚡ Ask Anything To Power AI...")
 
-    if user_input:
-        content_escaped = (user_input
+    if user_input or uploaded_image:
+        # Image handle karo
+        image_content = None
+        if uploaded_image:
+            import base64
+            image_bytes = uploaded_image.read()
+            image_b64 = base64.b64encode(image_bytes).decode()
+            image_type = uploaded_image.type
+            image_content = f"data:{image_type};base64,{image_b64}"
+            # Image dikhao
+            st.image(uploaded_image, width=200)
+
+        text_input = user_input or "Is image ke baare mein batao"
+
+        content_escaped = (text_input
             .replace('&', '&amp;').replace('<', '&lt;')
             .replace('>', '&gt;').replace('"', '&quot;')
             .replace("'", '&#39;'))
@@ -693,15 +708,34 @@ else:
                 {content_escaped}
             </div>
         </div>""", unsafe_allow_html=True)
-        st.session_state.messages.append({"role": "user", "content": user_input})
+
+        st.session_state.messages.append({"role": "user", "content": text_input})
 
         with st.spinner("⚡ Thinking..."):
             try:
-                response = chatbot.invoke(
-                    {"input": user_input},
-                    config={"configurable": {"session_id": st.session_state.current_chat_id}}
-                )
-                bot_reply = response.content
+                if image_content:
+                    # Vision wala request
+                    from groq import Groq
+                    client = Groq()
+                    vision_response = client.chat.completions.create(
+                        model="meta-llama/llama-4-scout-17b-16e-instruct",
+                        messages=[
+                            {
+                                "role": "user",
+                                "content": [
+                                    {"type": "text", "text": text_input},
+                                    {"type": "image_url", "image_url": {"url": image_content}}
+                                ]
+                            }
+                        ]
+                    )
+                    bot_reply = vision_response.choices[0].message.content
+                else:
+                    response = chatbot.invoke(
+                        {"input": text_input},
+                        config={"configurable": {"session_id": st.session_state.current_chat_id}}
+                    )
+                    bot_reply = response.content
             except Exception as e:
                 bot_reply = handle_api_error(e)
 
@@ -725,9 +759,9 @@ else:
                 {reply_escaped}
             </div>
         </div>""", unsafe_allow_html=True)
+
         st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
-        # Save
         if not st.session_state.is_guest:
-            save_chat(st.session_state.username, user_input, bot_reply, st.session_state.current_chat_id)
+            save_chat(st.session_state.username, text_input, bot_reply, st.session_state.current_chat_id)
             st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()

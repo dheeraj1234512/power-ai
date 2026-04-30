@@ -8,3 +8,4 @@ langchain-groq
 python-dotenv
 streamlit
 duckduckgo-search
+pillow
