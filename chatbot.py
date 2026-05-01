@@ -1,26 +1,19 @@
-import os
 from langchain_groq import ChatGroq
-from langchain_community.tools.tavily_search import TavilySearchResults
-from langchain.agents import create_tool_calling_agent, AgentExecutor
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_community.chat_message_histories import ChatMessageHistory
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from dotenv import load_dotenv
 
-# Load API Keys from .env file
+# Load API Key from .env file
 load_dotenv()
 
-# 1. Search Tool Setup (Internet Access)
-search_tool = TavilySearchResults(max_results=3)
-tools = [search_tool]
-
-# 2. Groq AI Model
+# Groq AI Model
 llm = ChatGroq(
     model="llama-3.3-70b-versatile",
     temperature=0.2
 )
 
-# 3. Agent Prompt Template
+# Prompt Template
 prompt = ChatPromptTemplate.from_messages([
     ("system", """
 You are **Power AI** — a smart, reliable, and highly capable AI assistant.
@@ -28,9 +21,10 @@ You are **Power AI** — a smart, reliable, and highly capable AI assistant.
 ━━━━━━━━━━━━━━━━━━━━
 🧠 CORE BEHAVIOR
 ━━━━━━━━━━━━━━━━━━━━
-- If the user asks about recent events, facts after 2023, or current data, you MUST use the search tool.
-- Always give clear, useful, and accurate answers.
-- Think smartly, but respond simply.
+- Always give clear, useful, and accurate answers
+- Think smartly, but respond simply
+- Avoid generic or boring responses
+- Focus on giving real value, not just information
 
 ━━━━━━━━━━━━━━━━━━━━
 🌐 LANGUAGE RULE
@@ -43,20 +37,46 @@ You are **Power AI** — a smart, reliable, and highly capable AI assistant.
 ━━━━━━━━━━━━━━━━━━━━
 ⚡ RESPONSE STYLE
 ━━━━━━━━━━━━━━━━━━━━
-- Start with a direct answer.
-- Use proper markdown (bold, bullet points, code blocks).
-- Give examples if needed.
+- Start with a direct answer
+- Use bullet points when helpful
+- Keep answers clean and structured
+- Give examples if needed
+- Avoid unnecessary long explanations
+
+━━━━━━━━━━━━━━━━━━━━
+🚀 SMART MODE
+━━━━━━━━━━━━━━━━━━━━
+- If user asks for:
+  • Learning → explain step-by-step (simple → advanced)
+  • Comparison → give clear winner with reason
+  • Projects → give real-world + practical steps
+  • Problems → give solution + short explanation
+
+━━━━━━━━━━━━━━━━━━━━
+⚠️ RULES
+━━━━━━━━━━━━━━━━━━━━
+- Do NOT guess wrong facts
+- Do NOT overcomplicate simple things
+- Do NOT give robotic answers
+
+━━━━━━━━━━━━━━━━━━━━
+🎯 GOAL
+━━━━━━━━━━━━━━━━━━━━
+Give responses that are:
+→ Helpful
+→ Practical
+→ Easy to understand
+→ Slightly smart (not boring)
 """),
+
     MessagesPlaceholder(variable_name="history"),
-    ("human", "{input}"),
-    MessagesPlaceholder(variable_name="agent_scratchpad"), # Important for agent thinking
+    ("human", "{input}")
 ])
 
-# 4. Create Agent & Executor
-agent = create_tool_calling_agent(llm, tools, prompt)
-agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=True)
+# Make Chain
+chain = prompt | llm
 
-# 5. Memory Store
+# Memory store
 store = {}
 
 def get_session_history(session_id: str):
@@ -64,31 +84,26 @@ def get_session_history(session_id: str):
         store[session_id] = ChatMessageHistory()
     return store[session_id]
 
-# 6. Run With Memory
+# Run With Memory
 chatbot = RunnableWithMessageHistory(
-    agent_executor,
+    chain,
     get_session_history,
     input_messages_key="input",
     history_messages_key="history"
 )
 
 # Start Chatbot
-if __name__ == "__main__":
-    print("🤖 Power AI (Internet Connected) Ready! (Type 'quit' to exit)\n")
+print("🤖 AI Chatbot Ready! (For Close Type 'quit')\n")
 
-    while True:
-        user_input = input("You: ")
-        
-        if user_input.lower() == "quit":
-            print("AI: Bye! 👋")
-            break
-        
-        try:
-            response = chatbot.invoke(
-                {"input": user_input},
-                config={"configurable": {"session_id": "user1"}}
-            )
-            # Agent returns result in 'output' key
-            print(f"Bot: {response['output']}\n")
-        except Exception as e:
-            print(f"Error: {e}\n")
+while True:
+    user_input = input("You: ")
+    
+    if user_input.lower() == "quit":
+        print("AI: Bye! 👋")
+        break
+    
+    response = chatbot.invoke(
+        {"input": user_input},
+        config={"configurable": {"session_id": "user1"}}
+    )
+    print(f"Bot: {response.content}\n")
