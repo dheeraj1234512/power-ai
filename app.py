@@ -589,7 +589,8 @@ else:
     def init_chatbot():
         from langchain_community.utilities import SerpAPIWrapper
         from langchain_core.tools import Tool
-        from langchain.agents import create_react_agent, AgentExecutor
+        from langchain_community.agent_toolkits import create_react_agent
+        from langchain.agents import AgentExecutor
         from langchain import hub
 
         llm = ChatGroq(model=MODEL_NAME, temperature=TEMPERATURE)
@@ -604,7 +605,6 @@ else:
         ]
 
         prompt = hub.pull("hwchase17/react")
-
         agent = create_react_agent(llm, tools, prompt)
         agent_executor = AgentExecutor(
             agent=agent,
