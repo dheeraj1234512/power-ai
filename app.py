@@ -587,7 +587,7 @@ else:
 
     # AI Setup
     def init_chatbot():
-        llm = ChatGroq(model="compound-beta", temperature=0.2)
+        llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2)
         prompt = ChatPromptTemplate.from_messages([
             ("system", f"""
     You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.

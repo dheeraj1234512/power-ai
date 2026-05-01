@@ -9,7 +9,7 @@ load_dotenv()
 
 # Groq AI Model
 llm = ChatGroq(
-    model="compound-beta",
+    model="llama-3.3-70b-versatile",
     temperature=0.2
 )
 
