@@ -588,7 +588,7 @@ else:
     # AI Setup
     def init_chatbot():
         from langchain_community.utilities import SerpAPIWrapper
-        from langchain.tools import Tool
+        from langchain_core.tools import Tool
         from langchain.agents import create_react_agent, AgentExecutor
         from langchain import hub
 
