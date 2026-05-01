@@ -588,8 +588,9 @@ else:
     # AI Setup
     def init_chatbot():
         from langchain_community.utilities import SerpAPIWrapper
-        from langchain.agents import AgentType, initialize_agent
         from langchain.tools import Tool
+        from langchain.agents import create_react_agent, AgentExecutor
+        from langchain import hub
 
         llm = ChatGroq(model=MODEL_NAME, temperature=TEMPERATURE)
 
@@ -602,33 +603,17 @@ else:
             )
         ]
 
-        agent = initialize_agent(
+        prompt = hub.pull("hwchase17/react")
+
+        agent = create_react_agent(llm, tools, prompt)
+        agent_executor = AgentExecutor(
+            agent=agent,
             tools=tools,
-            llm=llm,
-            agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
             verbose=False,
             handle_parsing_errors=True,
-            max_iterations=3,
-            agent_kwargs={
-                "prefix": f"""You are Power AI — an advanced AI assistant (2026 model) created by Dheeraj.
-
-Current Date: {get_timestamp_display()}
-User Name: {st.session_state.username}
-
-LANGUAGE RULE:
-- English input → English reply
-- Hindi input → Hindi reply
-- Hinglish → Hinglish
-
-WEB SEARCH RULE:
-- IPL matches, scores, news, current events → ALWAYS search first
-- Latest prices, products, updates → search
-- Basic concepts, definitions → don't search
-
-Give accurate, helpful answers always!"""
-            }
+            max_iterations=3
         )
-        return agent
+        return agent_executor
 
     chatbot = init_chatbot()
     # Show Messages - Theme aware colors
@@ -685,7 +670,7 @@ Give accurate, helpful answers always!"""
 
         with st.spinner("⚡ Thinking..."):
             try:
-               bot_reply = chatbot.run(user_input)
+               bot_reply = chatbot.invoke({"input": user_input})["output"]
             except Exception as e:
                 bot_reply = handle_api_error(e)
 
