@@ -587,63 +587,35 @@ else:
 
     # AI Setup
     def init_chatbot():
+        from langchain_community.utilities import TavilySearchAPIWrapper
+        from langchain_community.tools.tavily_search import TavilySearchResults
+
         llm = ChatGroq(model=MODEL_NAME, temperature=TEMPERATURE)
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", f"""
-    You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.
+        
+        search_tool = TavilySearchResults(max_results=3)
 
-    ═══════════════════════════════════
-    🧠 CORE IDENTITY
-    ═══════════════════════════════════
-    - You are sharp, accurate, and practical — not generic.
-    - You think step-by-step internally but respond clearly and directly.
-    - You give **high-value, structured, and actionable answers**.
-    - You avoid fluff, repetition, and vague statements.
+        def search_and_answer(question):
+            # Pehle search karo
+            results = search_tool.invoke(question)
+            search_context = "\n".join([r.get("content", "") for r in results if isinstance(r, dict)])
+            
+            # Phir AI se answer lo with search results
+            full_prompt = f"""Search Results:
+{search_context}
 
-    ═══════════════════════════════════
-    📅 CONTEXT
-    ═══════════════════════════════════
-    - Current Date: {get_timestamp_display()}
-    - User Name: {st.session_state.username}
+User Question: {question}
 
-    ═══════════════════════════════════
-    🌐 LANGUAGE INTELLIGENCE (STRICT RULE)
-    ═══════════════════════════════════
-    - ALWAYS match user's language style:
-    • English → English
-    • Hindi → Hindi
-    • Hinglish → Hinglish (natural, not forced)
-    - Never switch language unless user does.
+Current Date: {get_timestamp_display()}
+User: {st.session_state.username}
 
-    ═══════════════════════════════════
-    ⚡ RESPONSE STYLE (VERY IMPORTANT)
-    ═══════════════════════════════════
-    - Start with a **clear answer**, then expand if needed
-    - Use bullet points for clarity
-    - Keep tone smart, helpful, slightly conversational
+LANGUAGE RULE: Match user's language exactly.
 
-    ═══════════════════════════════════
-    🎯 GOAL
-    ═══════════════════════════════════
-    Give answers that feel like expert guidance, not just information.
-    Always aim: **"User ko real value mile — not just response"**
-    """),
+Answer based on search results above. Be accurate and helpful."""
+            
+            response = llm.invoke(full_prompt)
+            return response.content
 
-            MessagesPlaceholder(variable_name="history"),
-            ("human", "{input}")
-        ])
-        chain = prompt | llm
-
-        def get_session_history(session_id: str):
-            if session_id not in st.session_state.store:
-                st.session_state.store[session_id] = ChatMessageHistory()
-            return st.session_state.store[session_id]
-
-        return RunnableWithMessageHistory(
-            chain, get_session_history,
-            input_messages_key="input",
-            history_messages_key="history"
-        )
+        return search_and_answer
 
     chatbot = init_chatbot()
 
@@ -701,11 +673,7 @@ else:
 
         with st.spinner("⚡ Thinking..."):
             try:
-                response = chatbot.invoke(
-                    {"input": user_input},
-                    config={"configurable": {"session_id": st.session_state.current_chat_id}}
-                )
-                bot_reply = response.content
+                   bot_reply = chatbot(user_input)
             except Exception as e:
                 bot_reply = handle_api_error(e)
 
