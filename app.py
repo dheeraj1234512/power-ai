@@ -6,6 +6,7 @@ from datetime import datetime
 import hashlib
 import secrets
 
+# Load Secrets
 if "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
 if "TAVILY_API_KEY" in st.secrets:
@@ -14,6 +15,8 @@ if "SERPAPI_API_KEY" in st.secrets:
     os.environ["SERPAPI_API_KEY"] = st.secrets["SERPAPI_API_KEY"]
 
 from langchain_groq import ChatGroq
+from langchain_community.tools.tavily_search import TavilySearchResults
+from langchain.agents import create_tool_calling_agent, AgentExecutor
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
@@ -67,28 +70,23 @@ def handle_api_error(error: Exception) -> str:
     return "Error processing request. Please try again."
 
 def hash_password(password, salt=None):
-    """Hash password with salt. If salt is None, generate a new one."""
     if salt is None:
         salt = secrets.token_hex(16)
     hashed = hashlib.sha256((salt + password).encode()).hexdigest()
     return f"{salt}${hashed}"
 
 def verify_password(stored_hash, password):
-    """Verify password against stored hash."""
     try:
         salt, hashed = stored_hash.split("$")
         return hash_password(password, salt) == stored_hash
     except ValueError:
-        # Fallback for old unsalted hashes
         return hashlib.sha256(password.encode()).hexdigest() == stored_hash
 
 def reset_chat_state():
-    """Reset chat messages and store."""
     st.session_state.messages = []
     st.session_state.store = {}
 
 def reset_all_state():
-    """Reset all chat state including history."""
     st.session_state.messages = []
     st.session_state.all_chats = {}
     st.session_state.store = {}
@@ -97,55 +95,28 @@ def reset_all_state():
 def get_theme_colors():
     if st.session_state.dark_mode:
         return {
-            "bg": "#0b0f14",
-            "panel": "#111823",
-            "text": "#e8eef5",
-            "muted": "#93a4b5",
-            "soft": "rgba(255,255,255,0.04)",
+            "bg": "#0b0f14", "panel": "#111823", "text": "#e8eef5",
+            "muted": "#93a4b5", "soft": "rgba(255,255,255,0.04)",
             "border": "rgba(255,255,255,0.08)",
         }
     return {
-        "bg": "#ffffff",
-        "panel": "#f0f2f5",
-        "text": "#1a1a1a",
-        "muted": "#666666",
-        "soft": "rgba(0,0,0,0.04)",
+        "bg": "#ffffff", "panel": "#f0f2f5", "text": "#1a1a1a",
+        "muted": "#666666", "soft": "rgba(0,0,0,0.04)",
         "border": "rgba(0,0,0,0.1)",
     }
 
 def get_css_styles(dark_mode=True):
     theme = get_theme_colors()
-    bg = theme["bg"]
-    panel = theme["panel"]
-    text = theme["text"]
-    muted = theme["muted"]
-    soft = theme["soft"]
-    border = theme["border"]
-
-    # Chat bubble colors based on theme
-    if dark_mode:
-        user_msg_bg = "#1f2a37"
-        user_msg_text = "#ffffff"
-        assistant_msg_bg = "#111823"
-        assistant_msg_text = "#e8eef5"
-        placeholder_color = "rgba(147,164,181,0.7)"
-    else:
-        user_msg_bg = "#4f7cff"
-        user_msg_text = "#ffffff"
-        assistant_msg_bg = "#f0f2f5"
-        assistant_msg_text = "#1a1a1a"
-        placeholder_color = "rgba(100,100,100,0.5)"
-
     return f"""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
 :root {{
-    --bg: {bg};
-    --panel: {panel};
-    --soft: {soft};
-    --border: {border};
-    --text: {text};
-    --muted: {muted};
+    --bg: {theme["bg"]};
+    --panel: {theme["panel"]};
+    --soft: {theme["soft"]};
+    --border: {theme["border"]};
+    --text: {theme["text"]};
+    --muted: {theme["muted"]};
     --accent: #4f7cff;
     --radius: 14px;
 }}
@@ -156,23 +127,10 @@ def get_css_styles(dark_mode=True):
     color: var(--text);
 }}
 
-header[data-testid="stHeader"] {{
-    background: transparent !important;
-    border: none !important;
-}}
-
-div[data-testid="stDecoration"] {{
-    display: none !important;
-}}
-
-[data-testid="stSidebar"] {{
-    background: var(--panel);
-    border-right: 1px solid var(--border);
-}}
-
-[data-testid="stSidebar"] * {{
-    color: var(--text);
-}}
+header[data-testid="stHeader"] {{ background: transparent !important; border: none !important; }}
+div[data-testid="stDecoration"] {{ display: none !important; }}
+[data-testid="stSidebar"] {{ background: var(--panel); border-right: 1px solid var(--border); }}
+[data-testid="stSidebar"] * {{ color: var(--text); }}
 
 .chat-item {{
     padding: 10px 12px;
@@ -183,34 +141,12 @@ div[data-testid="stDecoration"] {{
     cursor: pointer;
 }}
 
-.chat-item:hover {{
-    background: var(--soft);
-    border-color: var(--border);
-    color: var(--text);
-}}
+.chat-item:hover {{ background: var(--soft); border-color: var(--border); color: var(--text); }}
+.chat-item-active {{ background: rgba(79,124,255,0.12); border-color: rgba(79,124,255,0.35); color: var(--text); }}
 
-.chat-item-active {{
-    background: rgba(79,124,255,0.12);
-    border-color: rgba(79,124,255,0.35);
-    color: var(--text);
-}}
-
-.main-header {{
-    text-align: center;
-    padding: 20px 10px;
-}}
-
-.main-header h1 {{
-    font-size: 2rem;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.5px;
-}}
-
-.main-header p {{
-    color: var(--muted);
-    font-size: 0.85rem;
-}}
+.main-header {{ text-align: center; padding: 20px 10px; }}
+.main-header h1 {{ font-size: 2rem; font-weight: 600; color: var(--text); letter-spacing: -0.5px; }}
+.main-header p {{ color: var(--muted); font-size: 0.85rem; }}
 
 .stTextInput input, .stChatInput textarea {{
     background: var(--panel);
@@ -225,62 +161,6 @@ div[data-testid="stDecoration"] {{
     outline: none !important;
 }}
 
-::placeholder {{
-    color: {placeholder_color} !important;
-}}
-
-.stChatMessage {{
-    border: none !important;
-    padding: 0 !important;
-    margin: 8px 0 !important;
-    background: transparent !important;
-}}
-
-.stChatMessage[data-testid="stChatMessageUser"] {{
-    display: flex;
-    justify-content: flex-end;
-}}
-
-.stChatMessage[data-testid="stChatMessageUser"] > div {{
-    background: {user_msg_bg};
-    color: {user_msg_text};
-    padding: 10px 14px;
-    border-radius: 18px 18px 4px 18px;
-    max-width: 80%;
-    font-size: 0.95rem;
-}}
-
-.stChatMessage[data-testid="stChatMessageUser"] * {{
-    color: {user_msg_text} !important;
-}}
-
-.stChatMessage[data-testid="stChatMessageUser"] p {{
-    color: {user_msg_text} !important;
-}}
-
-.stChatMessage[data-testid="stChatMessageAssistant"] {{
-    display: flex;
-    justify-content: flex-start;
-}}
-
-.stChatMessage[data-testid="stChatMessageAssistant"] > div {{
-    background: {assistant_msg_bg};
-    color: {assistant_msg_text};
-    padding: 10px 14px;
-    border-radius: 18px 18px 18px 4px;
-    max-width: 80%;
-    font-size: 0.95rem;
-    border: 1px solid var(--border);
-}}
-
-.stChatMessage[data-testid="stChatMessageAssistant"] * {{
-    color: {assistant_msg_text} !important;
-}}
-
-.stChatMessage[data-testid="stChatMessageAssistant"] p {{
-    color: {assistant_msg_text} !important;
-}}
-
 .stButton button {{
     background: var(--accent);
     color: white;
@@ -289,41 +169,14 @@ div[data-testid="stDecoration"] {{
     font-weight: 500;
     transition: 0.2s ease;
 }}
+.stButton button:hover {{ opacity: 0.9; }}
+.stTabs [data-baseweb="tab"] {{ color: var(--muted); }}
+.stTabs [aria-selected="true"] {{ color: var(--text); border-bottom: none !important; }}
 
-.stButton button:hover {{
-    opacity: 0.9;
-}}
-
-.stTabs [data-baseweb="tab"] {{
-    color: var(--muted);
-}}
-
-.stTabs [aria-selected="true"] {{
-    color: var(--text);
-    border-bottom: none !important;
-}}
-
-::-webkit-scrollbar {{
-    width: 6px;
-}}
-
-::-webkit-scrollbar-thumb {{
-    background: rgba(255,255,255,0.15);
-    border-radius: 10px;
-}}
-
+::-webkit-scrollbar {{ width: 6px; }}
+::-webkit-scrollbar-thumb {{ background: rgba(255,255,255,0.15); border-radius: 10px; }}
 #MainMenu {{ visibility: hidden; }}
 footer {{ visibility: hidden; }}
-
-@media (max-width: 768px) {{
-    .main-header h1 {{ font-size: 1.5rem; }}
-    .stChatMessage {{ padding: 10px; }}
-    .stChatMessage[data-testid="stChatMessageUser"] > div,
-    .stChatMessage[data-testid="stChatMessageAssistant"] > div {{
-        max-width: 92%;
-        font-size: 0.9rem;
-    }}
-}}
 """
 
 st.markdown(f"<style>{get_css_styles(st.session_state.dark_mode)}</style>", unsafe_allow_html=True)
@@ -334,10 +187,7 @@ def get_sheets():
     try:
         creds = Credentials.from_service_account_info(
             st.secrets[GCP_SECRET_KEY],
-            scopes=[
-                "https://www.googleapis.com/auth/spreadsheets",
-                "https://www.googleapis.com/auth/drive"
-            ]
+            scopes=["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
         )
         client = gspread.authorize(creds)
         workbook = client.open_by_key(SHEET_ID)
@@ -355,9 +205,7 @@ def register_user(username, password):
                 if user.get("Username") == username:
                     return False, "Username already exists!"
             users_sheet.append_row([
-                username,
-                hash_password(password),
-                get_timestamp_datetime()
+                username, hash_password(password), get_timestamp_datetime()
             ])
             return True, "Registration successful!"
         except Exception as e:
@@ -381,14 +229,10 @@ def save_chat(username, question, answer, chat_id):
     if chat_sheet:
         try:
             chat_sheet.append_row([
-                get_timestamp_datetime(),
-                question,
-                answer,
-                username,
-                chat_id
+                get_timestamp_datetime(), question, answer, username, chat_id
             ])
         except Exception as e:
-            st.error(handle_api_error(e))
+            pass
 
 def get_user_history(username):
     chat_sheet, _ = get_sheets()
@@ -397,11 +241,10 @@ def get_user_history(username):
             data = chat_sheet.get_all_records()
             return [row for row in data if row.get("Username") == username]
         except Exception as e:
-            st.error(handle_api_error(e))
+            pass
     return []
 
 def load_user_chat_history(username: str):
-    """Load and structure user's chat history."""
     history = get_user_history(username)
     chats = {}
     for row in history:
@@ -481,15 +324,9 @@ if not st.session_state.logged_in:
 
 # ===== CHAT PAGE =====
 else:
-    # ===== SIDEBAR =====
     with st.sidebar:
-        st.markdown("""
-        <div class="sidebar-header">
-            <h2>⚡ POWER AI</h2>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("""<div class="sidebar-header"><h2>⚡ POWER AI</h2></div>""", unsafe_allow_html=True)
 
-        # New Chat button
         if st.button("➕ New Chat", use_container_width=True):
             if st.session_state.messages:
                 st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
@@ -499,7 +336,6 @@ else:
 
         st.divider()
 
-        # Show Old Chats
         if not st.session_state.is_guest and st.session_state.all_chats:
             st.markdown("**💬 Old Chats:**")
             for chat_id, chat_msgs in reversed(list(st.session_state.all_chats.items())):
@@ -528,7 +364,6 @@ else:
 
         st.divider()
 
-        # User info and theme toggle
         if st.session_state.is_guest:
             st.markdown("👤 **Guest Mode**")
         else:
@@ -543,8 +378,6 @@ else:
                 st.session_state.dark_mode = True
                 st.rerun()
 
-
-
         if st.button("🚪 Logout", use_container_width=True):
             st.session_state.logged_in = False
             st.session_state.username = ""
@@ -552,7 +385,7 @@ else:
             reset_all_state()
             st.session_state.reg_success = False
             st.rerun()
-        # Settings
+
         with st.expander("⚙️ Settings"):
             st.markdown("**🔐 Change Password**")
             old_pass = st.text_input("Current Password:", type="password", key="old_pass")
@@ -576,63 +409,39 @@ else:
                                     break
                 else:
                     st.warning("⚠️ Fill all fields!")
+
     # ===== MAIN CHAT AREA =====
     st.markdown("""
     <div class="main-header">
         <h1>⚡ POWER AI</h1>
-        <p>✦ Your Intelligent Assistant ✦</p>
+        <p>✦ Your Intelligent Assistant (Web Enabled) ✦</p>
     </div>
     """, unsafe_allow_html=True)
     st.divider()
 
-    # AI Setup
+    # AI Setup with Search Agent
     def init_chatbot():
+        search_tool = TavilySearchResults(max_results=3)
+        tools = [search_tool]
+        
         llm = ChatGroq(model=MODEL_NAME, temperature=TEMPERATURE)
+        
         prompt = ChatPromptTemplate.from_messages([
             ("system", f"""
-    You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.
-
-    ═══════════════════════════════════
-    🧠 CORE IDENTITY
-    ═══════════════════════════════════
-    - You are sharp, accurate, and practical — not generic.
-    - You think step-by-step internally but respond clearly and directly.
-    - You give **high-value, structured, and actionable answers**.
-    - You avoid fluff, repetition, and vague statements.
-
-    ═══════════════════════════════════
-    📅 CONTEXT
-    ═══════════════════════════════════
+    You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant connected to the internet.
     - Current Date: {get_timestamp_display()}
     - User Name: {st.session_state.username}
-
-    ═══════════════════════════════════
-    🌐 LANGUAGE INTELLIGENCE (STRICT RULE)
-    ═══════════════════════════════════
-    - ALWAYS match user's language style:
-    • English → English
-    • Hindi → Hindi
-    • Hinglish → Hinglish (natural, not forced)
-    - Never switch language unless user does.
-
-    ═══════════════════════════════════
-    ⚡ RESPONSE STYLE (VERY IMPORTANT)
-    ═══════════════════════════════════
-    - Start with a **clear answer**, then expand if needed
-    - Use bullet points for clarity
-    - Keep tone smart, helpful, slightly conversational
-
-    ═══════════════════════════════════
-    🎯 GOAL
-    ═══════════════════════════════════
-    Give answers that feel like expert guidance, not just information.
-    Always aim: **"User ko real value mile — not just response"**
+    - You MUST use the search tool if the user asks about current events, news, or latest facts.
+    - Give high-value, structured, and actionable answers using clear markdown.
+    - Always reply in the same language as the user.
     """),
-
             MessagesPlaceholder(variable_name="history"),
-            ("human", "{input}")
+            ("human", "{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
         ])
-        chain = prompt | llm
+        
+        agent = create_tool_calling_agent(llm, tools, prompt)
+        agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
 
         def get_session_history(session_id: str):
             if session_id not in st.session_state.store:
@@ -640,98 +449,41 @@ else:
             return st.session_state.store[session_id]
 
         return RunnableWithMessageHistory(
-            chain, get_session_history,
-            input_messages_key="input",
-            history_messages_key="history"
+            agent_executor, get_session_history,
+            input_messages_key="input", history_messages_key="history"
         )
 
     chatbot = init_chatbot()
 
-    # Show Messages - Theme aware colors
-    if st.session_state.dark_mode:
-        user_bg, user_text = "#4f7cff", "#ffffff"
-        assistant_bg, assistant_text = "#2d2d2d", "#e8eef5"
-        assistant_border = "#404040"
-    else:
-        user_bg, user_text = "#4f7cff", "#ffffff"
-        assistant_bg, assistant_text = "#f0f2f5", "#1a1a1a"
-        assistant_border = "#e0e0e0"
-
+    # Show Messages using Native Streamlit Chat Elements (fixes markdown issues)
     for msg in st.session_state.messages:
-        # Escape HTML special characters
-        content = (msg['content']
-                  .replace('&', '&amp;')
-                  .replace('<', '&lt;')
-                  .replace('>', '&gt;')
-                  .replace('"', '&quot;')
-                  .replace("'", '&#39;'))
-
-        if msg["role"] == "user":
-            st.markdown(f"""
-            <div style="display: flex; justify-content: flex-end; margin: 8px 0;">
-                <div style="background: {user_bg}; color: {user_text}; padding: 10px 14px; border-radius: 18px 18px 4px 18px; max-width: 80%; word-wrap: break-word; font-family: Inter, sans-serif; font-size: 0.95rem;">
-                    {content}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.markdown(f"""
-            <div style="display: flex; justify-content: flex-start; margin: 8px 0;">
-                <div style="background: {assistant_bg}; color: {assistant_text}; padding: 10px 14px; border-radius: 18px 18px 18px 4px; max-width: 80%; word-wrap: break-word; border: 1px solid {assistant_border}; font-family: Inter, sans-serif; font-size: 0.95rem;">
-                    {content}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
 
     # Input
     user_input = st.chat_input("⚡ Ask Anything To Power AI...")
 
     if user_input:
-        content_escaped = (user_input
-            .replace('&', '&amp;').replace('<', '&lt;')
-            .replace('>', '&gt;').replace('"', '&quot;')
-            .replace("'", '&#39;'))
-        st.markdown(f"""
-        <div style="display:flex; justify-content:flex-end; margin:8px 0;">
-            <div style="background:{user_bg}; color:{user_text}; padding:10px 14px; border-radius:18px 18px 4px 18px; max-width:80%; word-wrap:break-word; font-family:Inter,sans-serif; font-size:0.95rem;">
-                {content_escaped}
-            </div>
-        </div>""", unsafe_allow_html=True)
         st.session_state.messages.append({"role": "user", "content": user_input})
+        with st.chat_message("user"):
+            st.markdown(user_input)
 
-        with st.spinner("⚡ Thinking..."):
-            try:
-                response = chatbot.invoke(
-                    {"input": user_input},
-                    config={"configurable": {"session_id": st.session_state.current_chat_id}}
-                )
-                bot_reply = response.content
-            except Exception as e:
-                bot_reply = handle_api_error(e)
+        with st.chat_message("assistant"):
+            with st.spinner("⚡ Thinking & Searching..."):
+                try:
+                    response = chatbot.invoke(
+                        {"input": user_input},
+                        config={"configurable": {"session_id": st.session_state.current_chat_id}}
+                    )
+                    # Agent output is stored in "output"
+                    bot_reply = response["output"]
+                except Exception as e:
+                    bot_reply = handle_api_error(e)
+            
+            st.markdown(bot_reply)
+            st.session_state.messages.append({"role": "assistant", "content": bot_reply})
 
-        reply_escaped = (bot_reply
-            .replace('&', '&amp;').replace('<', '&lt;')
-            .replace('>', '&gt;').replace('"', '&quot;')
-            .replace("'", '&#39;'))
-        placeholder = st.empty()
-        displayed = ""
-        for char in reply_escaped:
-            displayed += char
-            placeholder.markdown(f"""
-            <div style="display:flex; justify-content:flex-start; margin:8px 0;">
-                <div style="background:{assistant_bg}; color:{assistant_text}; padding:10px 14px; border-radius:18px 18px 18px 4px; max-width:80%; word-wrap:break-word; border:1px solid {assistant_border}; font-family:Inter,sans-serif; font-size:0.95rem;">
-                    {displayed}▌
-                </div>
-            </div>""", unsafe_allow_html=True)
-        placeholder.markdown(f"""
-        <div style="display:flex; justify-content:flex-start; margin:8px 0;">
-            <div style="background:{assistant_bg}; color:{assistant_text}; padding:10px 14px; border-radius:18px 18px 18px 4px; max-width:80%; word-wrap:break-word; border:1px solid {assistant_border}; font-family:Inter,sans-serif; font-size:0.95rem;">
-                {reply_escaped}
-            </div>
-        </div>""", unsafe_allow_html=True)
-        st.session_state.messages.append({"role": "assistant", "content": bot_reply})
-
-        # Save
+        # Save History
         if not st.session_state.is_guest:
             save_chat(st.session_state.username, user_input, bot_reply, st.session_state.current_chat_id)
             st.session_state.all_chats[st.session_state.current_chat_id] = st.session_state.messages.copy()
