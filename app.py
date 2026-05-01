@@ -8,6 +8,10 @@ import secrets
 
 if "GROQ_API_KEY" in st.secrets:
     os.environ["GROQ_API_KEY"] = st.secrets["GROQ_API_KEY"]
+if "TAVILY_API_KEY" in st.secrets:
+    os.environ["TAVILY_API_KEY"] = st.secrets["TAVILY_API_KEY"]
+if "SERPAPI_API_KEY" in st.secrets:
+    os.environ["SERPAPI_API_KEY"] = st.secrets["SERPAPI_API_KEY"]
 
 from langchain_groq import ChatGroq
 from langchain_community.chat_message_histories import ChatMessageHistory
@@ -583,66 +587,50 @@ else:
 
     # AI Setup
     def init_chatbot():
+        from langchain_community.utilities import SerpAPIWrapper
+        from langchain.agents import AgentType, initialize_agent
+        from langchain.tools import Tool
+
         llm = ChatGroq(model=MODEL_NAME, temperature=TEMPERATURE)
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", f"""
-    You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.
 
-    ═══════════════════════════════════
-    🧠 CORE IDENTITY
-    ═══════════════════════════════════
-    - You are sharp, accurate, and practical — not generic.
-    - You think step-by-step internally but respond clearly and directly.
-    - You give **high-value, structured, and actionable answers**.
-    - You avoid fluff, repetition, and vague statements.
+        search = SerpAPIWrapper()
+        tools = [
+            Tool(
+                name="Web Search",
+                func=search.run,
+                description="Use for IPL scores, current news, matches, prices, latest events after 2024."
+            )
+        ]
 
-    ═══════════════════════════════════
-    📅 CONTEXT
-    ═══════════════════════════════════
-    - Current Date: {get_timestamp_display()}
-    - User Name: {st.session_state.username}
+        agent = initialize_agent(
+            tools=tools,
+            llm=llm,
+            agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+            verbose=False,
+            handle_parsing_errors=True,
+            max_iterations=3,
+            agent_kwargs={
+                "prefix": f"""You are Power AI — an advanced AI assistant (2026 model) created by Dheeraj.
 
-    ═══════════════════════════════════
-    🌐 LANGUAGE INTELLIGENCE (STRICT RULE)
-    ═══════════════════════════════════
-    - ALWAYS match user's language style:
-    • English → English
-    • Hindi → Hindi
-    • Hinglish → Hinglish (natural, not forced)
-    - Never switch language unless user does.
+Current Date: {get_timestamp_display()}
+User Name: {st.session_state.username}
 
-    ═══════════════════════════════════
-    ⚡ RESPONSE STYLE (VERY IMPORTANT)
-    ═══════════════════════════════════
-    - Start with a **clear answer**, then expand if needed
-    - Use bullet points for clarity
-    - Keep tone smart, helpful, slightly conversational
+LANGUAGE RULE:
+- English input → English reply
+- Hindi input → Hindi reply
+- Hinglish → Hinglish
 
-    ═══════════════════════════════════
-    🎯 GOAL
-    ═══════════════════════════════════
-    Give answers that feel like expert guidance, not just information.
-    Always aim: **"User ko real value mile — not just response"**
-    """),
+WEB SEARCH RULE:
+- IPL matches, scores, news, current events → ALWAYS search first
+- Latest prices, products, updates → search
+- Basic concepts, definitions → don't search
 
-            MessagesPlaceholder(variable_name="history"),
-            ("human", "{input}")
-        ])
-        chain = prompt | llm
-
-        def get_session_history(session_id: str):
-            if session_id not in st.session_state.store:
-                st.session_state.store[session_id] = ChatMessageHistory()
-            return st.session_state.store[session_id]
-
-        return RunnableWithMessageHistory(
-            chain, get_session_history,
-            input_messages_key="input",
-            history_messages_key="history"
+Give accurate, helpful answers always!"""
+            }
         )
+        return agent
 
     chatbot = init_chatbot()
-
     # Show Messages - Theme aware colors
     if st.session_state.dark_mode:
         user_bg, user_text = "#4f7cff", "#ffffff"
@@ -697,11 +685,7 @@ else:
 
         with st.spinner("⚡ Thinking..."):
             try:
-                response = chatbot.invoke(
-                    {"input": user_input},
-                    config={"configurable": {"session_id": st.session_state.current_chat_id}}
-                )
-                bot_reply = response.content
+               bot_reply = chatbot.run(user_input)
             except Exception as e:
                 bot_reply = handle_api_error(e)
 
