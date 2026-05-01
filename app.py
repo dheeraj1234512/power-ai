@@ -587,47 +587,66 @@ else:
 
     # AI Setup
     def init_chatbot():
-        from langchain_community.utilities import SerpAPIWrapper
-        from langchain_core.tools import Tool
-        from langchain.agents import create_react_agent, AgentExecutor
-        from langchain_core.prompts import PromptTemplate
-
         llm = ChatGroq(model=MODEL_NAME, temperature=TEMPERATURE)
-        search = SerpAPIWrapper()
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", f"""
+    You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.
 
-        tools = [
-            Tool(
-                name="Web Search",
-                func=search.run,
-                description="Use for IPL scores, current news, matches, prices, latest events."
-            )
-        ]
+    ═══════════════════════════════════
+    🧠 CORE IDENTITY
+    ═══════════════════════════════════
+    - You are sharp, accurate, and practical — not generic.
+    - You think step-by-step internally but respond clearly and directly.
+    - You give **high-value, structured, and actionable answers**.
+    - You avoid fluff, repetition, and vague statements.
 
-        template = """You are Power AI assistant. Answer using tools when needed.
+    ═══════════════════════════════════
+    📅 CONTEXT
+    ═══════════════════════════════════
+    - Current Date: {get_timestamp_display()}
+    - User Name: {st.session_state.username}
 
-Current Date: """ + get_timestamp_display() + """
-User: """ + st.session_state.username + """
+    ═══════════════════════════════════
+    🌐 LANGUAGE INTELLIGENCE (STRICT RULE)
+    ═══════════════════════════════════
+    - ALWAYS match user's language style:
+    • English → English
+    • Hindi → Hindi
+    • Hinglish → Hinglish (natural, not forced)
+    - Never switch language unless user does.
 
-LANGUAGE: Match user's language always.
-WEB SEARCH: Use for IPL, news, current events, scores.
+    ═══════════════════════════════════
+    ⚡ RESPONSE STYLE (VERY IMPORTANT)
+    ═══════════════════════════════════
+    - Start with a **clear answer**, then expand if needed
+    - Use bullet points for clarity
+    - Keep tone smart, helpful, slightly conversational
 
-Tools available: {tools}
-Tool names: {tool_names}
+    ═══════════════════════════════════
+    🎯 GOAL
+    ═══════════════════════════════════
+    Give answers that feel like expert guidance, not just information.
+    Always aim: **"User ko real value mile — not just response"**
+    """),
 
-Question: {input}
-Thought: {agent_scratchpad}"""
+            MessagesPlaceholder(variable_name="history"),
+            ("human", "{input}")
+        ])
+        chain = prompt | llm
 
-        prompt = PromptTemplate.from_template(template)
-        agent = create_react_agent(llm, tools, prompt)
-        return AgentExecutor(
-            agent=agent,
-            tools=tools,
-            verbose=False,
-            handle_parsing_errors=True,
-            max_iterations=3
+        def get_session_history(session_id: str):
+            if session_id not in st.session_state.store:
+                st.session_state.store[session_id] = ChatMessageHistory()
+            return st.session_state.store[session_id]
+
+        return RunnableWithMessageHistory(
+            chain, get_session_history,
+            input_messages_key="input",
+            history_messages_key="history"
         )
 
     chatbot = init_chatbot()
+
     # Show Messages - Theme aware colors
     if st.session_state.dark_mode:
         user_bg, user_text = "#4f7cff", "#ffffff"
@@ -682,7 +701,11 @@ Thought: {agent_scratchpad}"""
 
         with st.spinner("⚡ Thinking..."):
             try:
-               bot_reply = chatbot.invoke({"input": user_input})["output"]
+                response = chatbot.invoke(
+                    {"input": user_input},
+                    config={"configurable": {"session_id": st.session_state.current_chat_id}}
+                )
+                bot_reply = response.content
             except Exception as e:
                 bot_reply = handle_api_error(e)
 
