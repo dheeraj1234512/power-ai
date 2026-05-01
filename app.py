@@ -589,31 +589,43 @@ else:
     def init_chatbot():
         from langchain_community.utilities import SerpAPIWrapper
         from langchain_core.tools import Tool
-        from langchain_community.agent_toolkits import create_react_agent
-        from langchain.agents import AgentExecutor
-        from langchain import hub
+        from langchain.agents import create_react_agent, AgentExecutor
+        from langchain_core.prompts import PromptTemplate
 
         llm = ChatGroq(model=MODEL_NAME, temperature=TEMPERATURE)
-
         search = SerpAPIWrapper()
+
         tools = [
             Tool(
                 name="Web Search",
                 func=search.run,
-                description="Use for IPL scores, current news, matches, prices, latest events after 2024."
+                description="Use for IPL scores, current news, matches, prices, latest events."
             )
         ]
 
-        prompt = hub.pull("hwchase17/react")
+        template = """You are Power AI assistant. Answer using tools when needed.
+
+Current Date: """ + get_timestamp_display() + """
+User: """ + st.session_state.username + """
+
+LANGUAGE: Match user's language always.
+WEB SEARCH: Use for IPL, news, current events, scores.
+
+Tools available: {tools}
+Tool names: {tool_names}
+
+Question: {input}
+Thought: {agent_scratchpad}"""
+
+        prompt = PromptTemplate.from_template(template)
         agent = create_react_agent(llm, tools, prompt)
-        agent_executor = AgentExecutor(
+        return AgentExecutor(
             agent=agent,
             tools=tools,
             verbose=False,
             handle_parsing_errors=True,
             max_iterations=3
         )
-        return agent_executor
 
     chatbot = init_chatbot()
     # Show Messages - Theme aware colors
