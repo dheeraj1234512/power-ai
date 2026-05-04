@@ -13,8 +13,3 @@ tavily-python
 google-auth
 pandas
 google-search-results
-langchain-text-splitters
-faiss-cpu
-sentence-transformers
-pypdf
-docx2txt
