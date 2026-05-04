@@ -17,6 +17,11 @@ from langchain_groq import ChatGroq
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_community.document_loaders import TextLoader, PyPDFLoader, Docx2txtLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings
+import tempfile
 
 # ===== CONSTANTS =====
 SHEET_ID = "1KZ4bnjGkOAjCy_vto-ESkcyl7LessM4IQmfMlSICFC0"
@@ -43,6 +48,10 @@ def init_session_state():
         "active_tab": "login",
         "reg_success": False,
         "dark_mode": True,
+        "uploaded_file": None,
+        "vector_store": None,
+        "file_processed": False,
+        "file_name": "",
     }
     for key, value in defaults.items():
         if key not in st.session_state:
@@ -92,6 +101,83 @@ def reset_all_state():
     st.session_state.messages = []
     st.session_state.all_chats = {}
     st.session_state.store = {}
+    clear_uploaded_file()
+
+# ===== FILE PROCESSING FUNCTIONS =====
+def process_uploaded_file(uploaded_file):
+    """Process uploaded file and create vector store."""
+    try:
+        # Create temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp_file:
+            tmp_file.write(uploaded_file.getvalue())
+            tmp_file_path = tmp_file.name
+
+        # Load document based on file type
+        file_extension = os.path.splitext(uploaded_file.name)[1].lower()
+        
+        if file_extension == '.pdf':
+            loader = PyPDFLoader(tmp_file_path)
+        elif file_extension in ['.docx', '.doc']:
+            loader = Docx2txtLoader(tmp_file_path)
+        elif file_extension == '.txt':
+            loader = TextLoader(tmp_file_path)
+        else:
+            os.unlink(tmp_file_path)
+            return False, "Unsupported file type. Please upload PDF, DOCX, or TXT files."
+
+        # Load and split documents
+        documents = loader.load()
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            length_function=len
+        )
+        texts = text_splitter.split_documents(documents)
+
+        # Create embeddings and vector store
+        embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
+        vector_store = FAISS.from_documents(texts, embeddings)
+
+        # Clean up temporary file
+        os.unlink(tmp_file_path)
+
+        return True, vector_store
+
+    except Exception as e:
+        return False, f"Error processing file: {str(e)}"
+
+def clear_uploaded_file():
+    """Clear uploaded file and vector store."""
+    st.session_state.uploaded_file = None
+    st.session_state.vector_store = None
+    st.session_state.file_processed = False
+    st.session_state.file_name = ""
+
+
+def ask_document_question(question: str) -> str:
+    """Answer a question using the uploaded document's vector store."""
+    if not st.session_state.vector_store:
+        return "No document is currently loaded. Please upload a file first."
+
+    documents = st.session_state.vector_store.similarity_search(question, k=3)
+    context = "\n\n".join(
+        getattr(doc, 'page_content', '') for doc in documents
+    )
+    prompt_text = f"""
+You are Power AI, an expert assistant. Use the uploaded document to answer the user's question.
+
+Document title: {st.session_state.file_name}
+
+Context:
+{context}
+
+Question: {question}
+
+Answer using the document. If the answer is not explicitly in the document, say: I could not find the answer in the uploaded document.
+"""
+    llm = ChatGroq(model=MODEL_NAME, temperature=TEMPERATURE)
+    response = llm.invoke({"input": prompt_text})
+    return getattr(response, 'content', str(response))
 
 # ===== THEME & CSS =====
 def get_theme_colors():
@@ -499,6 +585,38 @@ else:
 
         st.divider()
 
+        # File Upload Section
+        st.markdown("**📄 Document Q&A**")
+        uploaded_file = st.file_uploader(
+            "Upload a document to ask questions about it",
+            type=["pdf", "txt", "docx"],
+            key="file_uploader",
+            help="Supported formats: PDF, TXT, DOCX"
+        )
+
+        if uploaded_file is not None:
+            if uploaded_file != st.session_state.uploaded_file:
+                with st.spinner("🔄 Processing document..."):
+                    success, result = process_uploaded_file(uploaded_file)
+                    if success:
+                        st.session_state.vector_store = result
+                        st.session_state.file_processed = True
+                        st.session_state.file_name = uploaded_file.name
+                        st.session_state.uploaded_file = uploaded_file
+                        st.success(f"✅ Document '{uploaded_file.name}' processed successfully!")
+                        st.rerun()
+                    else:
+                        st.error(f"❌ {result}")
+        
+        # Show uploaded file status
+        if st.session_state.file_processed:
+            st.info(f"📄 Active: {st.session_state.file_name}")
+            if st.button("🗑️ Clear Document", use_container_width=True):
+                clear_uploaded_file()
+                st.rerun()
+
+        st.divider()
+
         # Show Old Chats
         if not st.session_state.is_guest and st.session_state.all_chats:
             st.markdown("**💬 Old Chats:**")
@@ -590,44 +708,44 @@ else:
         llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2)
         prompt = ChatPromptTemplate.from_messages([
             ("system", f"""
-    You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.
+You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.
 
-    ═══════════════════════════════════
-    🧠 CORE IDENTITY
-    ═══════════════════════════════════
-    - You are sharp, accurate, and practical — not generic.
-    - You think step-by-step internally but respond clearly and directly.
-    - You give **high-value, structured, and actionable answers**.
-    - You avoid fluff, repetition, and vague statements.
+═══════════════════════════════════
+🧠 CORE IDENTITY
+═══════════════════════════════════
+- You are sharp, accurate, and practical — not generic.
+- You think step-by-step internally but respond clearly and directly.
+- You give **high-value, structured, and actionable answers**.
+- You avoid fluff, repetition, and vague statements.
 
-    ═══════════════════════════════════
-    📅 CONTEXT
-    ═══════════════════════════════════
-    - Current Date: {get_timestamp_display()}
-    - User Name: {st.session_state.username}
+═══════════════════════════════════
+📅 CONTEXT
+══════════════════════════════════
+- Current Date: {get_timestamp_display()}
+- User Name: {st.session_state.username}
 
-    ═══════════════════════════════════
-    🌐 LANGUAGE INTELLIGENCE (STRICT RULE)
-    ═══════════════════════════════════
-    - ALWAYS match user's language style:
-    • English → English
-    • Hindi → Hindi
-    • Hinglish → Hinglish (natural, not forced)
-    - Never switch language unless user does.
+═══════════════════════════════════
+🌐 LANGUAGE INTELLIGENCE (STRICT RULE)
+══════════════════════════════════
+- ALWAYS match user's language style:
+• English → English
+• Hindi → Hindi
+• Hinglish → Hinglish (natural, not forced)
+- Never switch language unless user does.
 
-    ═══════════════════════════════════
-    ⚡ RESPONSE STYLE (VERY IMPORTANT)
-    ═══════════════════════════════════
-    - Start with a **clear answer**, then expand if needed
-    - Use bullet points for clarity
-    - Keep tone smart, helpful, slightly conversational
+═══════════════════════════════════
+⚡ RESPONSE STYLE (VERY IMPORTANT)
+══════════════════════════════════
+- Start with a **clear answer**, then expand if needed
+- Use bullet points for clarity
+- Keep tone smart, helpful, slightly conversational
 
-    ═══════════════════════════════════
-    🎯 GOAL
-    ═══════════════════════════════════
-    Give answers that feel like expert guidance, not just information.
-    Always aim: **"User ko real value mile — not just response"**
-    """),
+═══════════════════════════════════
+🎯 GOAL
+══════════════════════════════════
+Give answers that feel like expert guidance, not just information.
+Always aim: **"User ko real value mile — not just response"**
+"""),
 
             MessagesPlaceholder(variable_name="history"),
             ("human", "{input}")
@@ -701,11 +819,14 @@ else:
 
         with st.spinner("⚡ Thinking..."):
             try:
-                response = chatbot.invoke(
-                    {"input": user_input},
-                    config={"configurable": {"session_id": st.session_state.current_chat_id}}
-                )
-                bot_reply = response.content
+                if st.session_state.file_processed and st.session_state.vector_store:
+                    bot_reply = ask_document_question(user_input)
+                else:
+                    response = chatbot.invoke(
+                        {"input": user_input},
+                        config={"configurable": {"session_id": st.session_state.current_chat_id}}
+                    )
+                    bot_reply = response.content
             except Exception as e:
                 bot_reply = handle_api_error(e)
 
