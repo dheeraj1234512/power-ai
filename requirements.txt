@@ -9,7 +9,7 @@ python-dotenv
 streamlit
 duckduckgo-search
 pillow
-tavily-python
+langchain-tavily
 google-auth
 pandas
 google-search-results

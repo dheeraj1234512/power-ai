@@ -5,8 +5,10 @@ from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
+from langchain_tavily import TavilySearchResults
 from dotenv import load_dotenv
 import os
+from datetime import datetime
 
 # Load API Key from .env file
 load_dotenv()
@@ -19,6 +21,9 @@ llm = ChatGroq(
     model="llama-3.3-70b-versatile",
     temperature=0.2
 )
+
+# Web Search Tool
+tavily_tool = TavilySearchResults(max_results=3)
 
 # ===== RAG SETUP =====
 def setup_rag():
@@ -58,6 +63,8 @@ retriever = setup_rag()
 prompt = ChatPromptTemplate.from_messages([
     ("system", """
 You are **Power AI** — a smart, reliable, and highly capable AI assistant.
+
+Current Date: {current_date}
 
 ━━━━━━━━━━━━━━━━━━━━
 🧠 CORE BEHAVIOR
@@ -122,14 +129,25 @@ Use this information when relevant:
 
 # Make Chain with RAG
 def get_relevant_context(query):
+    context = ""
     if retriever:
         try:
             docs = retriever.invoke(query)
-            return "\n\n".join([doc.page_content for doc in docs])
+            context += "\n\n".join([doc.page_content for doc in docs])
         except Exception as e:
             print(f"Retrieval failed: {e}")
-            return ""
-    return ""
+    
+    # Check if query needs current information
+    current_keywords = ["current", "today", "now", "latest", "recent", "2024", "2025", "2026"]
+    if any(keyword in query.lower() for keyword in current_keywords):
+        try:
+            search_results = tavily_tool.invoke({"query": query})
+            search_context = "\n\n".join([result["content"] for result in search_results])
+            context += f"\n\nRecent Web Search Results:\n{search_context}"
+        except Exception as e:
+            print(f"Search failed: {e}")
+    
+    return context
 
 # Enhanced chain with context
 from langchain_core.runnables import Runnable
@@ -142,11 +160,15 @@ class ContextAwareChain(Runnable):
         # Get relevant context
         context = get_relevant_context(query)
 
+        # Get current date
+        current_date = datetime.now().strftime("%Y-%m-%d")
+
         # Format prompt with context
         formatted_prompt = prompt.format_messages(
             context=context,
             history=history,
-            input=query
+            input=query,
+            current_date=current_date
         )
 
         # Get response
