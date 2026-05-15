@@ -13,8 +13,17 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import Runnable
 from langchain_core.runnables.history import RunnableWithMessageHistory
 from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_text_splitters import CharacterTextSplitter
+
+try:
+    from langchain_huggingface import HuggingFaceEmbeddings
+except ImportError:
+    try:
+        from langchain.embeddings import HuggingFaceEmbeddings
+    except ImportError as e:
+        raise ImportError(
+            "HuggingFaceEmbeddings is required. Install 'langchain-huggingface' or update your LangChain version."
+        ) from e
 
 load_dotenv()
 

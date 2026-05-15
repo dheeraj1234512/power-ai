@@ -12,6 +12,7 @@ pillow
 serpapi
 anthropic
 langchain-anthropic
+langchain-huggingface
 google-auth
 pandas
 google-search-results
