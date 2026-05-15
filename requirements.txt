@@ -1,0 +1,10 @@
+extra-streamlit-components
+google-auth
+gspread
+langchain
+langchain-community
+langchain-core
+langchain-groq
+python-dotenv
+streamlit
+duckduckgo-search
