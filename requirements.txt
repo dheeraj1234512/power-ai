@@ -9,7 +9,9 @@ python-dotenv
 streamlit
 duckduckgo-search
 pillow
-tavily-python
+serpapi
+anthropic
+langchain-anthropic
 google-auth
 pandas
 google-search-results
