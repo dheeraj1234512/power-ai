@@ -13,10 +13,7 @@ if "TAVILY_API_KEY" in st.secrets:
 if "SERPAPI_API_KEY" in st.secrets:
     os.environ["SERPAPI_API_KEY"] = st.secrets["SERPAPI_API_KEY"]
 
-from langchain_groq import ChatGroq
-from langchain_community.chat_message_histories import ChatMessageHistory
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.runnables.history import RunnableWithMessageHistory
+from chatbot import assistant
 
 # ===== CONSTANTS =====
 SHEET_ID = "1KZ4bnjGkOAjCy_vto-ESkcyl7LessM4IQmfMlSICFC0"
@@ -585,67 +582,8 @@ else:
     """, unsafe_allow_html=True)
     st.divider()
 
-    # AI Setup
-    def init_chatbot():
-        llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.2)
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", f"""
-    You are **Power AI** — an advanced, intelligent, and highly reliable AI assistant (2026 model), created by Dheeraj.
-
-    ═══════════════════════════════════
-    🧠 CORE IDENTITY
-    ═══════════════════════════════════
-    - You are sharp, accurate, and practical — not generic.
-    - You think step-by-step internally but respond clearly and directly.
-    - You give **high-value, structured, and actionable answers**.
-    - You avoid fluff, repetition, and vague statements.
-
-    ═══════════════════════════════════
-    📅 CONTEXT
-    ═══════════════════════════════════
-    - Current Date: {get_timestamp_display()}
-    - User Name: {st.session_state.username}
-
-    ═══════════════════════════════════
-    🌐 LANGUAGE INTELLIGENCE (STRICT RULE)
-    ═══════════════════════════════════
-    - ALWAYS match user's language style:
-    • English → English
-    • Hindi → Hindi
-    • Hinglish → Hinglish (natural, not forced)
-    - Never switch language unless user does.
-
-    ═══════════════════════════════════
-    ⚡ RESPONSE STYLE (VERY IMPORTANT)
-    ═══════════════════════════════════
-    - Start with a **clear answer**, then expand if needed
-    - Use bullet points for clarity
-    - Keep tone smart, helpful, slightly conversational
-
-    ═══════════════════════════════════
-    🎯 GOAL
-    ═══════════════════════════════════
-    Give answers that feel like expert guidance, not just information.
-    Always aim: **"User ko real value mile — not just response"**
-    """),
-
-            MessagesPlaceholder(variable_name="history"),
-            ("human", "{input}")
-        ])
-        chain = prompt | llm
-
-        def get_session_history(session_id: str):
-            if session_id not in st.session_state.store:
-                st.session_state.store[session_id] = ChatMessageHistory()
-            return st.session_state.store[session_id]
-
-        return RunnableWithMessageHistory(
-            chain, get_session_history,
-            input_messages_key="input",
-            history_messages_key="history"
-        )
-
-    chatbot = init_chatbot()
+    # The assistant is built in chatbot.py and routed through the current-aware model router.
+    chatbot = assistant
 
     # Show Messages - Theme aware colors
     if st.session_state.dark_mode:
@@ -705,7 +643,10 @@ else:
                     {"input": user_input},
                     config={"configurable": {"session_id": st.session_state.current_chat_id}}
                 )
-                bot_reply = response.content
+                if isinstance(response, dict):
+                    bot_reply = response.get("content", "")
+                else:
+                    bot_reply = getattr(response, "content", str(response))
             except Exception as e:
                 bot_reply = handle_api_error(e)
 
