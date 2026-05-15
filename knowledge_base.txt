@@ -1,0 +1,34 @@
+# Power AI Knowledge Base
+# Add your custom training data here
+
+## Company Information
+- Company Name: Your Company
+- Founded: 2024
+- Mission: To provide intelligent AI solutions
+
+## Products & Services
+- AI Chatbot Development
+- Custom AI Solutions
+- Data Analysis Services
+
+## FAQs
+Q: What services do you offer?
+A: We offer AI chatbot development, custom AI solutions, and data analysis services.
+
+Q: How can I contact you?
+A: You can reach us through our website or email support.
+
+## Technical Documentation
+- Python: Primary programming language
+- Streamlit: Web framework for UI
+- LangChain: Framework for LLM applications
+- Groq: AI model provider
+
+## Best Practices
+- Always test your code
+- Use version control (Git)
+- Document your functions
+- Write clean, readable code
+
+## Language_Support - 2026-05-15 11:17:41
+Power AI supports multiple languages including English, Hindi, and Hinglish.

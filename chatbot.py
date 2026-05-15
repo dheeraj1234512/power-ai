@@ -2,7 +2,14 @@ from langchain_groq import ChatGroq
 from langchain_community.chat_message_histories import ChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables.history import RunnableWithMessageHistory
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain_text_splitters import CharacterTextSplitter
 from dotenv import load_dotenv
+import os
+
+# Load API Key from .env file
+load_dotenv()
 
 # Load API Key from .env file
 load_dotenv()
@@ -12,6 +19,40 @@ llm = ChatGroq(
     model="llama-3.3-70b-versatile",
     temperature=0.2
 )
+
+# ===== RAG SETUP =====
+def setup_rag():
+    try:
+        # Load knowledge base
+        with open("knowledge_base.txt", "r", encoding="utf-8") as f:
+            knowledge_text = f.read()
+
+        # Split text into chunks
+        text_splitter = CharacterTextSplitter(
+            separator="\n\n",
+            chunk_size=500,
+            chunk_overlap=100
+        )
+        texts = text_splitter.split_text(knowledge_text)
+
+        # Create embeddings
+        embeddings = HuggingFaceEmbeddings(
+            model_name="sentence-transformers/all-MiniLM-L6-v2"
+        )
+
+        # Create vector store
+        vectorstore = FAISS.from_texts(texts, embeddings)
+
+        # Create retriever
+        retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+
+        return retriever
+    except Exception as e:
+        print(f"RAG setup failed: {e}")
+        return None
+
+# Initialize RAG
+retriever = setup_rag()
 
 # Prompt Template
 prompt = ChatPromptTemplate.from_messages([
@@ -67,14 +108,52 @@ Give responses that are:
 → Practical
 → Easy to understand
 → Slightly smart (not boring)
+
+━━━━━━━━━━━━━━━━━━━━
+📚 KNOWLEDGE BASE
+━━━━━━━━━━━━━━━━━━━━
+Use this information when relevant:
+{context}
 """),
 
     MessagesPlaceholder(variable_name="history"),
     ("human", "{input}")
 ])
 
-# Make Chain
-chain = prompt | llm
+# Make Chain with RAG
+def get_relevant_context(query):
+    if retriever:
+        try:
+            docs = retriever.invoke(query)
+            return "\n\n".join([doc.page_content for doc in docs])
+        except Exception as e:
+            print(f"Retrieval failed: {e}")
+            return ""
+    return ""
+
+# Enhanced chain with context
+from langchain_core.runnables import Runnable
+
+class ContextAwareChain(Runnable):
+    def invoke(self, inputs, config=None):
+        query = inputs["input"]
+        history = inputs.get("history", [])
+
+        # Get relevant context
+        context = get_relevant_context(query)
+
+        # Format prompt with context
+        formatted_prompt = prompt.format_messages(
+            context=context,
+            history=history,
+            input=query
+        )
+
+        # Get response
+        response = llm.invoke(formatted_prompt)
+        return response
+
+chain = ContextAwareChain()
 
 # Memory store
 store = {}
@@ -92,18 +171,19 @@ chatbot = RunnableWithMessageHistory(
     history_messages_key="history"
 )
 
-# Start Chatbot
-print("🤖 AI Chatbot Ready! (For Close Type 'quit')\n")
+# Start Chatbot (only when run directly)
+if __name__ == "__main__":
+    print("🤖 AI Chatbot Ready! (For Close Type 'quit')\n")
 
-while True:
-    user_input = input("You: ")
-    
-    if user_input.lower() == "quit":
-        print("AI: Bye! 👋")
-        break
-    
-    response = chatbot.invoke(
-        {"input": user_input},
-        config={"configurable": {"session_id": "user1"}}
-    )
-    print(f"Bot: {response.content}\n")
+    while True:
+        user_input = input("You: ")
+
+        if user_input.lower() == "quit":
+            print("AI: Bye! 👋")
+            break
+
+        response = chatbot.invoke(
+            {"input": user_input},
+            config={"configurable": {"session_id": "user1"}}
+        )
+        print(f"Bot: {response.content}\n")

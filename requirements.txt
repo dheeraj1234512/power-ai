@@ -13,3 +13,5 @@ tavily-python
 google-auth
 pandas
 google-search-results
+faiss-cpu
+sentence-transformers

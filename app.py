@@ -63,7 +63,7 @@ def get_timestamp_display():
 def handle_api_error(error: Exception) -> str:
     error_str = str(error).lower()
     if "rate_limit" in error_str or "429" in error_str:
-        return "⚡ Server is busy! Please try again in a few minutes 🙏"
+        return "⚡ Server is busy! Please try again in a few minutes"
     return "Error processing request. Please try again."
 
 def hash_password(password, salt=None):
